@@ -21,7 +21,6 @@ interface CategoryOutput {
 const BASE_URL = "https://award.tabelog.com";
 
 // --- 🔥 完整的翻譯與日文對照表 (Master Dictionary) ---
-// 修正：補上 tempura, oden, shaved_ice 等遺漏項目
 const MASTER_CATEGORY_MAP: Record<
   string,
   { zh: string; jp: string; isRegionSpecific?: boolean }
@@ -44,11 +43,11 @@ const MASTER_CATEGORY_MAP: Record<
   // --- 日本料理 / 海鮮 / 鍋物 ---
   japanese: { zh: "日本料理", jp: "日本料理" },
   sushi: { zh: "壽司", jp: "寿司" },
-  tempura: { zh: "天婦羅", jp: "天ぷら" }, // ✅ 補上這裡
+  tempura: { zh: "天婦羅", jp: "天ぷら" },
   unagi: { zh: "鰻魚", jp: "うなぎ" },
   fugu: { zh: "河豚", jp: "ふぐ" },
   crab: { zh: "螃蟹", jp: "かに" },
-  oden: { zh: "關東煮", jp: "おでん" }, // ✅ 補上這裡
+  oden: { zh: "關東煮", jp: "おでん" },
   sukiyaki_shabushabu: { zh: "壽喜燒・涮涮鍋", jp: "すき焼き・しゃぶしゃぶ" },
   motsunabe: { zh: "牛雜鍋", jp: "もつ鍋" },
 
@@ -91,7 +90,7 @@ const MASTER_CATEGORY_MAP: Record<
   bread: { zh: "麵包", jp: "パン" },
   sweets: { zh: "甜點", jp: "スイーツ" },
   wagashi: { zh: "和菓子 (日式甜點)", jp: "和菓子・甘味処" },
-  shaved_ice: { zh: "刨冰", jp: "かき氷" }, // ✅ 補上這裡
+  shaved_ice: { zh: "刨冰", jp: "かき氷" },
   ice_gelato: { zh: "冰淇淋", jp: "アイス・ジェラート" },
   shochu: { zh: "燒酒", jp: "焼酎" },
   beer: { zh: "啤酒", jp: "ビアバー" },
@@ -120,7 +119,6 @@ const rawSlugs = await page.evaluate(() => {
   return anchors
     .map((a) => {
       const href = a.getAttribute("href") || "";
-      // 提取 slug
       const match = href.match(/\/hyakumeiten\/([a-z0-9_]+)/);
       if (!match) return null;
       return match[1];
@@ -130,36 +128,28 @@ const rawSlugs = await page.evaluate(() => {
 });
 
 console.log("2. 處理 Slug 並對應到 Master Dictionary");
-// 2. 處理 Slug 並對應到 Master Dictionary
 const categoryList: CategoryOutput[] = rawSlugs
-  .filter((slug) => !["top", "history", "msg"].includes(slug)) // 過濾掉非類別頁面
+  .filter((slug) => !["top", "history", "msg"].includes(slug))
   .map((fullSlug) => {
     let lookupKey = fullSlug;
     let baseSlug = fullSlug.replace(/_east$|_west$|_tokyo$/, "");
 
-    // 優先查 fullSlug (例如 ramen_hokkaido)，查不到再查 baseSlug (例如 ramen)
     let finalKey = MASTER_CATEGORY_MAP[lookupKey] ? lookupKey : baseSlug;
-
     const data = MASTER_CATEGORY_MAP[finalKey];
 
     if (!data) {
-      console.warn(
-        `⚠️ 警告：字典裡找不到 [${fullSlug}] 或 [${baseSlug}]，請手動補充。`
-      );
       return {
         name: baseSlug,
         traditionalChineseName: baseSlug.toUpperCase(),
         japaneseName: baseSlug,
       };
     }
-
     return {
       name: baseSlug,
       traditionalChineseName: data.zh,
       japaneseName: data.jp,
     };
   })
-  // 再次去重 (根據中文名稱)
   .filter(
     (v, i, a) =>
       a.findIndex(
@@ -167,10 +157,7 @@ const categoryList: CategoryOutput[] = rawSlugs
       ) === i
   );
 
-console.log(
-  `✅ 偵測到 ${categoryList.length} 個有效食物類別:`,
-  categoryList.map((c) => c.traditionalChineseName).join(", ")
-);
+console.log(`✅ 偵測到 ${categoryList.length} 個有效食物類別，準備開始爬取...`);
 
 // --- 生成 categories.ts ---
 const tsContent = `export const HYAKUMEITAN_CATEGORY = ${JSON.stringify(
@@ -185,13 +172,10 @@ console.log("📝 已生成類別檔案: categories.ts");
 const allNaganoShops: Shop[] = [];
 
 console.log("3. 遍歷每個類別抓取長野店家");
-// 3. 遍歷每個類別抓取長野店家
 for (const cat of categoryList) {
   console.log(`\n🔍 搜尋類別：${cat.traditionalChineseName} (${cat.name})...`);
 
   const tryUrls: string[] = [];
-
-  // 判斷是否為地區限定的特殊類別
   const isRegionalSpecial =
     cat.name.includes("_") &&
     !cat.name.endsWith("_east") &&
@@ -211,14 +195,28 @@ for (const cat of categoryList) {
     if (foundShopsInCat) break;
 
     try {
-      const response = await page.goto(url, { waitUntil: "domcontentloaded" });
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(10000); // 稍微等待渲染
 
       if (
         page.url().includes("award.tabelog.com/hyakumeiten/msg") ||
-        response?.status() === 404
+        page.url() === `${BASE_URL}/hyakumeiten`
       ) {
         continue;
       }
+
+      // 嘗試等待元素出現，失敗也不會報錯，只是為了讓畫面跑完
+      try {
+        await Promise.race([
+          page.waitForSelector(
+            ".hyakumeiten-shop__item, .hyakumeiten-shop-item",
+            { timeout: 10000 }
+          ),
+          page
+            .getByText("該当する店舗はありません")
+            .waitFor({ timeout: 10000 }),
+        ]);
+      } catch (e) {}
 
       const noResult = await page.getByText("該当する店舗はありません").count();
       if (noResult > 0) {
@@ -226,6 +224,7 @@ for (const cat of categoryList) {
       }
 
       const shops = await page.evaluate((categoryName) => {
+        // 1. 取得所有店家卡片
         const items = document.querySelectorAll(
           ".hyakumeiten-shop__item, .hyakumeiten-shop-item"
         );
@@ -243,16 +242,17 @@ for (const cat of categoryList) {
           );
 
           if (nameEl) {
+            // 2. 移除所有的「長野」文字檢查 (關鍵修正!)
+            // 因為網址已經篩選過 (?pref=nagano)，這裡顯示的絕對都是符合條件的
             const addressText = areaEl?.textContent?.trim() || "";
-            if (addressText.includes("長野")) {
-              results.push({
-                category: categoryName,
-                name: nameEl.textContent?.trim(),
-                url: (nameEl as HTMLAnchorElement).href,
-                address: addressText,
-                rating: ratingEl?.textContent?.trim() || "",
-              });
-            }
+
+            results.push({
+              category: categoryName,
+              name: nameEl.textContent?.trim(),
+              url: (nameEl as HTMLAnchorElement).href,
+              address: addressText, // 這裡可能顯示 "松本" 或 "軽井沢"，但這沒關係，它是長野的店
+              rating: ratingEl?.textContent?.trim() || "",
+            });
           }
         });
         return results;
@@ -264,7 +264,7 @@ for (const cat of categoryList) {
         foundShopsInCat = true;
       }
     } catch (e) {
-      console.error(`   ❌ Error visiting ${url}`);
+      console.error(`   ❌ Error visiting ${url}:`, e);
     }
   }
 }
@@ -272,7 +272,6 @@ for (const cat of categoryList) {
 await browser.close();
 
 console.log("4. 輸出 CSV");
-// 4. 輸出 CSV
 console.log(`\n📊 總結：共找到 ${allNaganoShops.length} 間位於長野的百名店。`);
 
 if (allNaganoShops.length > 0) {
