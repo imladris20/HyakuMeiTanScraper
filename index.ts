@@ -352,9 +352,9 @@ async function processShop(shop: IShop, browserInstance: Browser) {
     shop.closedDay = detailInfo.closedDay || undefined;
     shop.businessHour = detailInfo.businessHour || undefined;
 
-    console.log(`   ✅ [完成] ${shop.name}`);
+    console.log(`✅ [完成] ${shop.name}`);
   } catch (e) {
-    console.error(`   ❌ [失敗] ${shop.url} - ${e}`);
+    console.error(`❌ [失敗] ${shop.url} - ${e}`);
   } finally {
     await page.close();
   }
@@ -374,7 +374,7 @@ async function worker(id: number) {
     completedCount++;
     // 顯示進度
     if (completedCount % 5 === 0 || queue.length === 0) {
-      console.log(`   ⏳ 進度: ${completedCount}/${allNaganoShops.length}`);
+      console.log(`⏳ 進度: ${completedCount}/${allNaganoShops.length}`);
     }
   }
 }
@@ -391,22 +391,29 @@ console.log("\n5. 輸出 CSV");
 console.log(`\n📊 總結：共找到 ${allNaganoShops.length} 間位於長野的百名店。`);
 
 if (allNaganoShops.length > 0) {
+  const outputPath = "output/nagano_hyakumeiten.csv";
+
   const csvWriter = createObjectCsvWriter({
-    path: "output/nagano_hyakumeiten.csv",
+    path: outputPath,
     header: [
-      { id: "name", title: "Name" },
-      { id: "address", title: "Address" },
-      { id: "category", title: "Category" },
+      { id: "name", title: "店名" },
+      { id: "address", title: "地址" },
+      { id: "category", title: "類別" },
       { id: "url", title: "URL" },
-      { id: "rating", title: "Rating" },
-      { id: "price", title: "Price" },
-      { id: "closedDay", title: "Closed Day" },
-      { id: "businessHour", title: "Business Hour" },
+      { id: "rating", title: "評分" },
+      { id: "price", title: "價格" },
+      { id: "closedDay", title: "公休日" },
+      { id: "businessHour", title: "營業時間" },
     ],
   });
 
   await csvWriter.writeRecords(allNaganoShops);
-  console.log("💾 6. 檔案已儲存: nagano_hyakumeiten.csv");
+
+  // 讀取檔案並補上 BOM
+  const content = fs.readFileSync(outputPath, "utf8");
+  fs.writeFileSync(outputPath, "\uFEFF" + content);
+
+  console.log("💾 6. 檔案已儲存 (含 BOM): nagano_hyakumeiten.csv");
 } else {
   console.log("⚠️ 6. 未找到任何店家。");
 }

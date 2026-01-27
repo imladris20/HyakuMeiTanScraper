@@ -1,10 +1,10 @@
 {
-  "name": "hyakumeitan",
+  "name": "hyakumeitan-scraper",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "tsx index.ts"
+    "dev": "tsx index.ts"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
