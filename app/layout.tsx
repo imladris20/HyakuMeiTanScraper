@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-Hant">
+    <html lang="zh-Hant" data-theme="dark">
       <body className="bg-base-200 text-base-content min-h-screen">
         {children}
       </body>
