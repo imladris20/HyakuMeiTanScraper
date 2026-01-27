@@ -11,7 +11,7 @@ console.log("🚀 [Node/npm] 開始執行 Tabelog 百名店爬蟲 (優化版)...
 
 // 1. 初始化瀏覽器
 const launchOptions: Parameters<typeof chromium.launch>[0] = {
-  headless: false,
+  headless: true,
 };
 if (process.platform === "win32") {
   launchOptions.channel = "chrome";
