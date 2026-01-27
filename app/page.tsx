@@ -170,7 +170,11 @@ export default function HomePage() {
 
       <div className="card bg-base-100 mb-8 shadow">
         <div className="card-body space-y-4">
-          <h2 className="card-title mb-2">Console 狀態</h2>
+          <h2 className="card-title mb-0">執行進度</h2>
+          <p className="text-base-content/70 mb-2 text-sm">
+            根據店家數量多寡與硬體設備、網路速度等因素，執行時間可能會有所不同，約會在
+            3-8 分鐘之間完成，請耐心等候。
+          </p>
           <div className="mockup-window border-base-300 bg-base-300/40 border">
             <div
               ref={consoleRef}
