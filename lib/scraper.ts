@@ -15,6 +15,8 @@ interface ScrapeResult {
   logs: string[];
 }
 
+type LogCallback = (message: string) => void;
+
 async function createBrowser(): Promise<Browser> {
   const launchOptions: Parameters<typeof chromium.launch>[0] = {
     headless: true,
@@ -25,7 +27,10 @@ async function createBrowser(): Promise<Browser> {
   return chromium.launch(launchOptions);
 }
 
-export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
+export async function scrapeHyakumeiten(
+  pref: string,
+  onLog?: LogCallback
+): Promise<ScrapeResult> {
   const browser = await createBrowser();
   const page = await browser.newPage();
   const logs: string[] = [];
@@ -33,11 +38,17 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
   const log = (message: string) => {
     logs.push(message);
     console.log(message);
+    if (onLog) {
+      onLog(message);
+    }
   };
 
   const logError = (message: string) => {
     logs.push(message);
     console.error(message);
+    if (onLog) {
+      onLog(message);
+    }
   };
 
   log(`🚀 開始執行 Tabelog 百名店查詢器 (pref=${pref})...`);

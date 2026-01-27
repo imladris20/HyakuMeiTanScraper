@@ -6,11 +6,10 @@ import { PREF_OPTIONS } from "../legacy/constants";
 import type { IShop } from "../legacy/types";
 
 import icon from "./assets/icon.png";
-interface ScrapeResponse {
-  shops: IShop[];
-  pref: string;
-  logs?: string[];
-}
+type StreamEvent =
+  | { type: "log"; message: string }
+  | { type: "result"; pref: string; shops: IShop[] }
+  | { type: "error"; message: string };
 
 export default function HomePage() {
   const [pref, setPref] = useState<string>("nagano");
@@ -45,16 +44,43 @@ export default function HomePage() {
         body: JSON.stringify({ pref }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "查詢失敗");
+      if (!res.body) {
+        throw new Error("瀏覽器不支援串流回應");
       }
 
-      const data: ScrapeResponse = await res.json();
-      setShops(data.shops);
-      setCurrentPref(data.pref);
-      if (Array.isArray(data.logs)) {
-        setConsoleLines(data.logs);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+          const line = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 1);
+          if (!line) continue;
+
+          let event: StreamEvent | null = null;
+          try {
+            event = JSON.parse(line) as StreamEvent;
+          } catch {
+            continue;
+          }
+
+          if (event.type === "log") {
+            appendLog(event.message);
+          } else if (event.type === "result") {
+            setShops(event.shops);
+            setCurrentPref(event.pref);
+          } else if (event.type === "error") {
+            setError(event.message);
+            appendLog(`❌ [server] ${event.message}`);
+          }
+        }
       }
     } catch (e: any) {
       appendLog(`❌ [client] ${e?.message ?? String(e)}`);
