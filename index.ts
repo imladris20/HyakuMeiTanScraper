@@ -207,9 +207,23 @@ for (const cat of categoryList) {
 // 關閉列表頁用的主要 Context/Page（其實不需要，只要最後用 browser.close 即可，但為了省資源可先關）
 // await context.close(); // 單一 page 下無法僅 close context
 
-console.log("\n4. (並行) 訪問每個店舗詳情頁取得資訊...");
+// 4. 去除重複店家（根據 URL）
+console.log("\n4. 去除重複店家...");
+const uniqueShopsMap = new Map<string, IShop>();
+for (const shop of allNaganoShops) {
+  const normalizedUrl = shop.url.replace(/\/$/, ""); // 移除結尾斜線
+  if (!uniqueShopsMap.has(normalizedUrl)) {
+    uniqueShopsMap.set(normalizedUrl, shop);
+  }
+}
+const uniqueShops = Array.from(uniqueShopsMap.values());
 console.log(
-  `📋 共 ${allNaganoShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`,
+  `   原始: ${allNaganoShops.length} 間，去重後: ${uniqueShops.length} 間\n`,
+);
+
+console.log("5. (並行) 訪問每個店舗詳情頁取得資訊...");
+console.log(
+  `📋 共 ${uniqueShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`,
 );
 
 // --- 並行處理邏輯 ---
@@ -361,7 +375,7 @@ async function processShop(shop: IShop, browserInstance: Browser) {
 }
 
 // 建立工作隊列
-const queue = [...allNaganoShops];
+const queue = [...uniqueShops];
 let completedCount = 0;
 
 // Worker 函式
@@ -374,7 +388,7 @@ async function worker(id: number) {
     completedCount++;
     // 顯示進度
     if (completedCount % 5 === 0 || queue.length === 0) {
-      console.log(`⏳ 進度: ${completedCount}/${allNaganoShops.length}`);
+      console.log(`⏳ 進度: ${completedCount}/${uniqueShops.length}`);
     }
   }
 }
@@ -387,10 +401,10 @@ await Promise.all(workers);
 
 await browser.close();
 
-console.log("\n5. 輸出 CSV");
-console.log(`\n📊 總結：共找到 ${allNaganoShops.length} 間位於長野的百名店。`);
+console.log("\n6. 輸出 CSV");
+console.log(`\n📊 總結：共找到 ${uniqueShops.length} 間位於長野的百名店。`);
 
-if (allNaganoShops.length > 0) {
+if (uniqueShops.length > 0) {
   const outputPath = "output/nagano_hyakumeiten.csv";
 
   const csvWriter = createObjectCsvWriter({
@@ -407,13 +421,13 @@ if (allNaganoShops.length > 0) {
     ],
   });
 
-  await csvWriter.writeRecords(allNaganoShops);
+  await csvWriter.writeRecords(uniqueShops);
 
   // 讀取檔案並補上 BOM
   const content = fs.readFileSync(outputPath, "utf8");
   fs.writeFileSync(outputPath, "\uFEFF" + content);
 
-  console.log("💾 6. 檔案已儲存 (含 BOM): nagano_hyakumeiten.csv");
+  console.log("💾 7. 檔案已儲存 (含 BOM): nagano_hyakumeiten.csv");
 } else {
-  console.log("⚠️ 6. 未找到任何店家。");
+  console.log("⚠️ 7. 未找到任何店家。");
 }
