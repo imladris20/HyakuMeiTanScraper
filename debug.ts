@@ -45,7 +45,7 @@ const TARGET_URL =
         report[sel] = {
           count: elements.length,
           firstItemHTML:
-            elements.length > 0
+            elements.length > 0 && elements[0]
               ? elements[0].outerHTML.slice(0, 300) + "..."
               : "N/A",
         };
