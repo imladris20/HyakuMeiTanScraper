@@ -1,47 +1,47 @@
 export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   {
     "name": "ramen_hokkaido",
-    "traditionalChineseName": "拉麵 (北海道)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン 北海道"
   },
   {
     "name": "ramen_tokyo",
-    "traditionalChineseName": "拉麵 (東京)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン TOKYO"
   },
   {
     "name": "ramen_kanagawa",
-    "traditionalChineseName": "拉麵 (神奈川)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン 神奈川"
   },
   {
     "name": "ramen_aichi",
-    "traditionalChineseName": "拉麵 (愛知)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン 愛知"
   },
   {
     "name": "ramen_osaka",
-    "traditionalChineseName": "拉麵 (大阪)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン 大阪"
   },
   {
     "name": "ramen_east",
-    "traditionalChineseName": "拉麵 (東日本)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン EAST"
   },
   {
     "name": "ramen_west",
-    "traditionalChineseName": "拉麵 (西日本)",
+    "traditionalChineseName": "拉麵",
     "japaneseName": "ラーメン WEST"
   },
   {
     "name": "yakitori_east",
-    "traditionalChineseName": "燒鳥 (東日本)",
+    "traditionalChineseName": "燒鳥",
     "japaneseName": "焼き鳥 EAST"
   },
   {
     "name": "yakitori_west",
-    "traditionalChineseName": "燒鳥 (西日本)",
+    "traditionalChineseName": "燒鳥",
     "japaneseName": "焼き鳥 WEST"
   },
   {
@@ -51,32 +51,32 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "yakiniku_tokyo",
-    "traditionalChineseName": "燒肉 (東京)",
+    "traditionalChineseName": "燒肉",
     "japaneseName": "焼肉 TOKYO"
   },
   {
     "name": "yakiniku_east",
-    "traditionalChineseName": "燒肉 (東日本)",
+    "traditionalChineseName": "燒肉",
     "japaneseName": "焼肉 EAST"
   },
   {
     "name": "yakiniku_west",
-    "traditionalChineseName": "燒肉 (西日本)",
+    "traditionalChineseName": "燒肉",
     "japaneseName": "焼肉 WEST"
   },
   {
     "name": "izakaya_east",
-    "traditionalChineseName": "居酒屋 (東日本)",
+    "traditionalChineseName": "居酒屋",
     "japaneseName": "居酒屋 EAST"
   },
   {
     "name": "izakaya_west",
-    "traditionalChineseName": "居酒屋 (西日本)",
+    "traditionalChineseName": "居酒屋",
     "japaneseName": "居酒屋 WEST"
   },
   {
     "name": "tachinomi",
-    "traditionalChineseName": "立吞 (站著喝)",
+    "traditionalChineseName": "立吞",
     "japaneseName": "立ち飲み"
   },
   {
@@ -86,57 +86,57 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "steak_east",
-    "traditionalChineseName": "牛排・鐵板燒 (東日本)",
+    "traditionalChineseName": "牛排・鐵板燒",
     "japaneseName": "ステーキ・鉄板焼き EAST"
   },
   {
     "name": "steak_west",
-    "traditionalChineseName": "牛排・鐵板燒 (西日本)",
+    "traditionalChineseName": "牛排・鐵板燒",
     "japaneseName": "ステーキ・鉄板焼き WEST"
   },
   {
     "name": "soba_east",
-    "traditionalChineseName": "蕎麥麵 (東日本)",
+    "traditionalChineseName": "蕎麥麵",
     "japaneseName": "そば EAST"
   },
   {
     "name": "soba_west",
-    "traditionalChineseName": "蕎麥麵 (西日本)",
+    "traditionalChineseName": "蕎麥麵",
     "japaneseName": "そば WEST"
   },
   {
     "name": "cafe_east",
-    "traditionalChineseName": "咖啡廳 (東日本)",
+    "traditionalChineseName": "咖啡廳",
     "japaneseName": "カフェ EAST"
   },
   {
     "name": "cafe_west",
-    "traditionalChineseName": "咖啡廳 (西日本)",
+    "traditionalChineseName": "咖啡廳",
     "japaneseName": "カフェ WEST"
   },
   {
     "name": "yoshoku_east",
-    "traditionalChineseName": "日式洋食 (東日本)",
+    "traditionalChineseName": "日式洋食",
     "japaneseName": "洋食 EAST"
   },
   {
     "name": "yoshoku_west",
-    "traditionalChineseName": "日式洋食 (西日本)",
+    "traditionalChineseName": "日式洋食",
     "japaneseName": "洋食 WEST"
   },
   {
     "name": "french_tokyo",
-    "traditionalChineseName": "法式料理 (東京)",
+    "traditionalChineseName": "法式料理",
     "japaneseName": "フレンチ TOKYO"
   },
   {
     "name": "french_east",
-    "traditionalChineseName": "法式料理 (東日本)",
+    "traditionalChineseName": "法式料理",
     "japaneseName": "フレンチ EAST"
   },
   {
     "name": "french_west",
-    "traditionalChineseName": "法式料理 (西日本)",
+    "traditionalChineseName": "法式料理",
     "japaneseName": "フレンチ WEST"
   },
   {
@@ -146,17 +146,17 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "italian_tokyo",
-    "traditionalChineseName": "義大利料理 (東京)",
+    "traditionalChineseName": "義大利料理",
     "japaneseName": "イタリアン TOKYO"
   },
   {
     "name": "italian_east",
-    "traditionalChineseName": "義大利料理 (東日本)",
+    "traditionalChineseName": "義大利料理",
     "japaneseName": "イタリアン EAST"
   },
   {
     "name": "italian_west",
-    "traditionalChineseName": "義大利料理 (西日本)",
+    "traditionalChineseName": "義大利料理",
     "japaneseName": "イタリアン WEST"
   },
   {
@@ -166,17 +166,17 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "japanese_tokyo",
-    "traditionalChineseName": "日本料理 (東京)",
+    "traditionalChineseName": "日本料理",
     "japaneseName": "日本料理 TOKYO"
   },
   {
     "name": "japanese_east",
-    "traditionalChineseName": "日本料理 (東日本)",
+    "traditionalChineseName": "日本料理",
     "japaneseName": "日本料理 EAST"
   },
   {
     "name": "japanese_west",
-    "traditionalChineseName": "日本料理 (西日本)",
+    "traditionalChineseName": "日本料理",
     "japaneseName": "日本料理 WEST"
   },
   {
@@ -186,17 +186,17 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "sushi_tokyo",
-    "traditionalChineseName": "壽司 (東京)",
+    "traditionalChineseName": "壽司",
     "japaneseName": "寿司 TOKYO"
   },
   {
     "name": "sushi_east",
-    "traditionalChineseName": "壽司 (東日本)",
+    "traditionalChineseName": "壽司",
     "japaneseName": "寿司 EAST"
   },
   {
     "name": "sushi_west",
-    "traditionalChineseName": "壽司 (西日本)",
+    "traditionalChineseName": "壽司",
     "japaneseName": "寿司 WEST"
   },
   {
@@ -216,32 +216,32 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "curry_tokyo",
-    "traditionalChineseName": "咖哩 (東京)",
+    "traditionalChineseName": "咖哩",
     "japaneseName": "カレー TOKYO"
   },
   {
     "name": "curry_east",
-    "traditionalChineseName": "咖哩 (東日本)",
+    "traditionalChineseName": "咖哩",
     "japaneseName": "カレー EAST"
   },
   {
     "name": "curry_west",
-    "traditionalChineseName": "咖哩 (西日本)",
+    "traditionalChineseName": "咖哩",
     "japaneseName": "カレー WEST"
   },
   {
     "name": "asia_ethnic_tokyo",
-    "traditionalChineseName": "亞洲・異國料理 (東京)",
+    "traditionalChineseName": "亞洲・異國料理",
     "japaneseName": "アジア・エスニック TOKYO"
   },
   {
     "name": "asia_ethnic_east",
-    "traditionalChineseName": "亞洲・異國料理 (東日本)",
+    "traditionalChineseName": "亞洲・異國料理",
     "japaneseName": "アジア・エスニック EAST"
   },
   {
     "name": "asia_ethnic_west",
-    "traditionalChineseName": "亞洲・異國料理 (西日本)",
+    "traditionalChineseName": "亞洲・異國料理",
     "japaneseName": "アジア・エスニック WEST"
   },
   {
@@ -256,17 +256,17 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "chinese_tokyo",
-    "traditionalChineseName": "中華料理 (東京)",
+    "traditionalChineseName": "中華料理",
     "japaneseName": "中国料理 TOKYO"
   },
   {
     "name": "chinese_east",
-    "traditionalChineseName": "中華料理 (東日本)",
+    "traditionalChineseName": "中華料理",
     "japaneseName": "中国料理 EAST"
   },
   {
     "name": "chinese_west",
-    "traditionalChineseName": "中華料理 (西日本)",
+    "traditionalChineseName": "中華料理",
     "japaneseName": "中国料理 WEST"
   },
   {
@@ -281,47 +281,47 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "udon_kagawa",
-    "traditionalChineseName": "烏龍麵 (香川)",
+    "traditionalChineseName": "烏龍麵",
     "japaneseName": "うどん 香川"
   },
   {
     "name": "udon_east",
-    "traditionalChineseName": "烏龍麵 (東日本)",
+    "traditionalChineseName": "烏龍麵",
     "japaneseName": "うどん EAST"
   },
   {
     "name": "udon_west",
-    "traditionalChineseName": "烏龍麵 (西日本)",
+    "traditionalChineseName": "烏龍麵",
     "japaneseName": "うどん WEST"
   },
   {
     "name": "wagashi_tokyo",
-    "traditionalChineseName": "和菓子 (東京)",
+    "traditionalChineseName": "和菓子",
     "japaneseName": "和菓子・甘味処 TOKYO"
   },
   {
     "name": "wagashi_east",
-    "traditionalChineseName": "和菓子 (東日本)",
+    "traditionalChineseName": "和菓子",
     "japaneseName": "和菓子・甘味処 EAST"
   },
   {
     "name": "wagashi_west",
-    "traditionalChineseName": "和菓子 (西日本)",
+    "traditionalChineseName": "和菓子",
     "japaneseName": "和菓子・甘味処 WEST"
   },
   {
     "name": "sweets_tokyo",
-    "traditionalChineseName": "甜點 (東京)",
+    "traditionalChineseName": "甜點",
     "japaneseName": "スイーツ TOKYO"
   },
   {
     "name": "sweets_east",
-    "traditionalChineseName": "甜點 (東日本)",
+    "traditionalChineseName": "甜點",
     "japaneseName": "スイーツ EAST"
   },
   {
     "name": "sweets_west",
-    "traditionalChineseName": "甜點 (西日本)",
+    "traditionalChineseName": "甜點",
     "japaneseName": "スイーツ WEST"
   },
   {
@@ -336,22 +336,22 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "bread_tokyo",
-    "traditionalChineseName": "麵包 (東京)",
+    "traditionalChineseName": "麵包",
     "japaneseName": "パン TOKYO"
   },
   {
     "name": "bread_east",
-    "traditionalChineseName": "麵包 (東日本)",
+    "traditionalChineseName": "麵包",
     "japaneseName": "パン EAST"
   },
   {
     "name": "bread_west",
-    "traditionalChineseName": "麵包 (西日本)",
+    "traditionalChineseName": "麵包",
     "japaneseName": "パン WEST"
   },
   {
     "name": "kissaten",
-    "traditionalChineseName": "純喫茶 (老派咖啡店)",
+    "traditionalChineseName": "純喫茶",
     "japaneseName": "喫茶店"
   }
 ];
