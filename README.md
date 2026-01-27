@@ -28,15 +28,15 @@
 
 ## 系統需求
 
-- **Node.js**：建議使用 **Node.js 20 以上版本**（Next.js 16 及 Playwright 官方建議版本）。
-- **npm / pnpm / yarn**：範例指令以下皆以 `npm` 演示。
+- **Node.js**：建議使用 **Node.js 24 以上版本**（Next.js 16 及 Playwright 官方建議版本）。
+- **bun / npm / pnpm / yarn**：範例指令以下皆以 `bun` 演示。
 - **作業系統**：macOS / Linux / Windows 皆可。
 - **網路連線**：需能連線至 `https://award.tabelog.com` 以及 Tabelog 主站。
 
 > 如果你尚未安裝 Playwright 的瀏覽器執行檔，第一次安裝完套件後，建議先執行一次：
 >
 > ```bash
-> npx playwright install chromium
+> bunx playwright install chromium
 > ```
 >
 > 這會下載 Chromium 執行檔，之後後端爬蟲才能正常啟動瀏覽器。
@@ -62,19 +62,31 @@
 
 以下假設你已經將專案原始碼下載到本機，例如目錄為 `HyakuMeiTanScraper/`。
 
+### 0. 安裝 bun 到你的 node 環境中
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+或是
+
+```bash
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
 ### 1. 安裝相依套件
 
 在專案根目錄執行：
 
 ```bash
 cd HyakuMeiTanScraper
-npm install
+bun install
 ```
 
 安裝完成後，建議先安裝 Playwright 的瀏覽器執行檔（只需跑一次）：
 
 ```bash
-npx playwright install chromium
+bunx playwright install chromium
 ```
 
 ### 2. 啟動開發伺服器（Next.js）
@@ -82,7 +94,7 @@ npx playwright install chromium
 在專案根目錄執行：
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 預設會啟動在 **`http://localhost:2950`**，終端機會顯示類似：
@@ -104,18 +116,18 @@ Next.js 16.1.5 (Turbopack)
 如果要在本機模擬正式環境（或部署前測試），可以：
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
-預設同樣是使用 `PORT=3000` 或你自行設定的 `PORT`（若要沿用 2950，可手動設定環境變數）。
+預設是使用 `PORT=2950` 或你自行設定的 `PORT`（若要沿用 2950，可手動設定環境變數）。
 
 ---
 
 ## 使用流程說明（透過網頁介面）
 
 1. **啟動開發伺服器**
-   - 在專案根目錄執行 `npm run dev`。
+   - 在專案根目錄執行 `bun run dev`。
    - 確認終端機顯示 `Local: http://localhost:2950`。
 
 2. **打開瀏覽器進入查詢頁**
@@ -171,10 +183,10 @@ npm start
 
 ## 使用流程說明（透過 CLI 腳本，選用）
 
-如果你想在終端機直接執行原始的 Node.js 腳本（目前寫死查詢長野 `pref=nagano`），可以使用 `npm` 腳本：
+如果你想在終端機直接執行原始的 Node.js 腳本（目前寫死查詢長野 `pref=nagano`），可以使用 `bun` 腳本：
 
 ```bash
-npm run scrape:nagano
+bun run scrape:nagano
 ```
 
 這會執行 `tsx index.ts`，流程與網頁版後端邏輯類似，但：
