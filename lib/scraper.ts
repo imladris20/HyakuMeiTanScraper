@@ -12,6 +12,7 @@ const CONCURRENCY_LIMIT = 5;
 interface ScrapeResult {
   shops: IShop[];
   csvPath: string;
+  logs: string[];
 }
 
 async function createBrowser(): Promise<Browser> {
@@ -27,14 +28,25 @@ async function createBrowser(): Promise<Browser> {
 export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
   const browser = await createBrowser();
   const page = await browser.newPage();
+  const logs: string[] = [];
 
-  console.log("🚀 開始執行 Tabelog 百名店查詢器 (pref=%s)...", pref);
+  const log = (message: string) => {
+    logs.push(message);
+    console.log(message);
+  };
 
-  console.log("0. 準備前往網址...");
+  const logError = (message: string) => {
+    logs.push(message);
+    console.error(message);
+  };
+
+  log(`🚀 開始執行 Tabelog 百名店查詢器 (pref=${pref})...`);
+
+  log("0. 準備前往網址...");
   await page.goto(`${BASE_URL}/hyakumeiten`, { waitUntil: "domcontentloaded" });
 
   // 1. 抓取所有類別 Slug
-  console.log("1. 抓取所有類別 Slug");
+  log("1. 抓取所有類別 Slug");
   const rawSlugs = await page.evaluate(() => {
     const anchors = Array.from(
       document.querySelectorAll('a[href*="/hyakumeiten/"]')
@@ -51,7 +63,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       .filter((v, i, a) => a.indexOf(v) === i);
   });
 
-  console.log("2. 處理 Slug 並對應到 Master Dictionary");
+  log("2. 處理 Slug 並對應到 Master Dictionary");
   const categoryList: ICategory[] = rawSlugs
     .filter((slug) => !["top", "history", "msg"].includes(slug))
     .map((fullSlug) => {
@@ -78,18 +90,16 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       };
     });
 
-  console.log(
+  log(
     `✅ 偵測到 ${categoryList.length} 個有效食物類別，準備開始爬取 (pref=${pref})...`
   );
 
   const allShops: IShop[] = [];
   const visitedFinalUrls = new Set<string>();
 
-  console.log("3. 遍歷每個類別抓取店家");
+  log("3. 遍歷每個類別抓取店家");
   for (const cat of categoryList) {
-    console.log(
-      `\n🔍 搜尋類別：${cat.traditionalChineseName} (${cat.name})...`
-    );
+    log(`\n🔍 搜尋類別：${cat.traditionalChineseName} (${cat.name})...`);
 
     const url = `${BASE_URL}/hyakumeiten/${cat.name}?pref=${pref}`;
 
@@ -117,7 +127,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
 
       const finalUrl = currentUrl.split("?")[0] || currentUrl;
       if (visitedFinalUrls.has(finalUrl)) {
-        console.log(`   ⏭️  已訪問過此頁面，跳過`);
+        log(`   ⏭️  已訪問過此頁面，跳過`);
         continue;
       }
 
@@ -198,15 +208,15 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       );
 
       if (shops.length > 0) {
-        console.log(`   🎉 找到 ${shops.length} 間`);
+        log(`   🎉 找到 ${shops.length} 間`);
         allShops.push(...shops);
       }
     } catch (e) {
-      console.error(`   ❌ Error visiting ${url}:`, e);
+      logError(`   ❌ Error visiting ${url}: ${e}`);
     }
   }
 
-  console.log("\n4. 去除重複店家...");
+  log("\n4. 去除重複店家...");
   const uniqueShopsMap = new Map<string, IShop>();
   for (const shop of allShops) {
     const normalizedUrl = shop.url.replace(/\/$/, "");
@@ -215,14 +225,10 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     }
   }
   const uniqueShops = Array.from(uniqueShopsMap.values());
-  console.log(
-    `   原始: ${allShops.length} 間，去重後: ${uniqueShops.length} 間\n`
-  );
+  log(`   原始: ${allShops.length} 間，去重後: ${uniqueShops.length} 間\n`);
 
-  console.log("5. (並行) 訪問每個店舗詳情頁取得資訊...");
-  console.log(
-    `📋 共 ${uniqueShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`
-  );
+  log("5. (並行) 訪問每個店舗詳情頁取得資訊...");
+  log(`📋 共 ${uniqueShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`);
 
   async function processShop(shop: IShop, browserInstance: Browser) {
     const page = await browserInstance.newPage();
@@ -347,9 +353,9 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       shop.closedDay = detailInfo.closedDay || undefined;
       shop.businessHour = detailInfo.businessHour || undefined;
 
-      console.log(`✅ [完成] ${shop.name}`);
+      log(`✅ [完成] ${shop.name}`);
     } catch (e) {
-      console.error(`❌ [失敗] ${shop.url} - ${e}`);
+      logError(`❌ [失敗] ${shop.url} - ${e}`);
     } finally {
       await page.close();
     }
@@ -366,7 +372,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       await processShop(shop, browser);
       completedCount++;
       if (completedCount % 5 === 0 || queue.length === 0) {
-        console.log(`⏳ 進度: ${completedCount}/${uniqueShops.length}`);
+        log(`⏳ 進度: ${completedCount}/${uniqueShops.length}`);
       }
     }
   }
@@ -378,10 +384,8 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
 
   await browser.close();
 
-  console.log("\n6. 輸出 CSV");
-  console.log(
-    `\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${pref} 的百名店。`
-  );
+  log("\n6. 輸出 CSV");
+  log(`\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${pref} 的百名店。`);
 
   const outputDir = path.join(process.cwd(), "output");
   if (!fs.existsSync(outputDir)) {
@@ -411,15 +415,14 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     const content = fs.readFileSync(outputPath, "utf8");
     fs.writeFileSync(outputPath, "\uFEFF" + content);
 
-    console.log(
-      `💾 檔案已儲存 (含 BOM): ${path.relative(process.cwd(), outputPath)}`
-    );
+    log(`💾 檔案已儲存 (含 BOM): ${path.relative(process.cwd(), outputPath)}`);
   } else {
-    console.log("⚠️ 未找到任何店家。");
+    log("⚠️ 未找到任何店家。");
   }
 
   return {
     shops: uniqueShops,
     csvPath: outputPath,
+    logs,
   };
 }

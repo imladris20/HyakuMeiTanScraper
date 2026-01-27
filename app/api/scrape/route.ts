@@ -13,11 +13,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "缺少 pref 參數" }, { status: 400 });
     }
 
-    const { shops } = await scrapeHyakumeiten(pref);
+    const { shops, logs } = await scrapeHyakumeiten(pref);
 
     return NextResponse.json({
       pref,
       shops,
+      logs,
     });
   } catch (e: any) {
     console.error("[api/scrape] error:", e);

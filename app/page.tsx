@@ -1,12 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { IShop } from "../types";
 import { PREF_OPTIONS } from "./constants";
 
+import icon from "./assets/icon.png";
 interface ScrapeResponse {
   shops: IShop[];
   pref: string;
+  logs?: string[];
 }
 
 export default function HomePage() {
@@ -15,13 +18,11 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [shops, setShops] = useState<IShop[]>([]);
   const [currentPref, setCurrentPref] = useState<string | null>(null);
-   const [consoleLines, setConsoleLines] = useState<string[]>([]);
-   const consoleRef = useRef<HTMLDivElement | null>(null);
+  const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const consoleRef = useRef<HTMLDivElement | null>(null);
 
   const appendLog = (message: string) => {
-    const now = new Date();
-    const ts = now.toTimeString().slice(0, 8); // HH:MM:SS
-    setConsoleLines((prev) => [...prev, `[${ts}] ${message}`]);
+    setConsoleLines((prev) => [...prev, message]);
   };
 
   useEffect(() => {
@@ -31,13 +32,13 @@ export default function HomePage() {
   }, [consoleLines]);
 
   const handleRun = async () => {
-    appendLog(`開始查詢（pref=${pref}）`);
     setError(null);
     setLoading(true);
     setShops([]);
+    setCurrentPref(null);
+    setConsoleLines([]);
 
     try {
-      appendLog("已送出 API 請求到 /api/scrape");
       const res = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -46,19 +47,19 @@ export default function HomePage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        appendLog(`伺服端回傳錯誤狀態碼：${res.status}`);
         throw new Error(data.message || "查詢失敗");
       }
 
       const data: ScrapeResponse = await res.json();
       setShops(data.shops);
       setCurrentPref(data.pref);
-      appendLog(`查詢完成，共取得 ${data.shops.length} 間店家`);
+      if (Array.isArray(data.logs)) {
+        setConsoleLines(data.logs);
+      }
     } catch (e: any) {
-      appendLog(`發生錯誤：${e?.message ?? String(e)}`);
+      appendLog(`❌ [client] ${e?.message ?? String(e)}`);
       setError(e.message || "未知錯誤");
     } finally {
-      appendLog("執行結束");
       setLoading(false);
     }
   };
@@ -68,7 +69,6 @@ export default function HomePage() {
     setCurrentPref(null);
     setError(null);
     setConsoleLines([]);
-    appendLog("已清除畫面與結果");
   };
 
   const downloadUrl =
@@ -78,7 +78,10 @@ export default function HomePage() {
 
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Tabelog 百名店查詢器</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <Image src={icon} alt="Tabelog 百名店查詢器" width={128} height={80} />
+        <h1 className="text-3xl font-bold">Tabelog 百名店查詢器</h1>
+      </div>
 
       <div className="card bg-base-100 mb-8 shadow">
         <div className="card-body space-y-4">
@@ -141,13 +144,13 @@ export default function HomePage() {
       <div className="card bg-base-100 mb-8 shadow">
         <div className="card-body space-y-4">
           <h2 className="card-title mb-2">Console 狀態</h2>
-          <div className="mockup-window border border-base-300 bg-base-300/40">
+          <div className="mockup-window border-base-300 bg-base-300/40 border">
             <div
               ref={consoleRef}
-              className="bg-base-900 text-base-100 px-4 py-3 h-64 overflow-y-auto font-mono text-xs"
+              className="bg-neutral text-neutral-content h-64 overflow-y-auto px-4 py-3 font-mono text-xs"
             >
               {consoleLines.length === 0 ? (
-                <span className="text-base-content/60">
+                <span className="text-neutral-content/60">
                   尚未開始執行，請先點擊上方「查詢」。
                 </span>
               ) : (
