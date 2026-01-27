@@ -28,7 +28,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
   const browser = await createBrowser();
   const page = await browser.newPage();
 
-  console.log("🚀 開始執行 Tabelog 百名店爬蟲 (pref=%s)...", pref);
+  console.log("🚀 開始執行 Tabelog 百名店查詢器 (pref=%s)...", pref);
 
   console.log("0. 準備前往網址...");
   await page.goto(`${BASE_URL}/hyakumeiten`, { waitUntil: "domcontentloaded" });

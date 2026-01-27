@@ -56,7 +56,7 @@ export default function HomePage() {
 
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Tabelog 百名店爬蟲</h1>
+      <h1 className="mb-6 text-3xl font-bold">Tabelog 百名店查詢器</h1>
 
       <div className="card bg-base-100 mb-8 shadow">
         <div className="card-body space-y-4">

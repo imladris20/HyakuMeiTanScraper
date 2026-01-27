@@ -1,4 +1,4 @@
-# Tabelog 百名店爬蟲 (Hyakumeiten Scraper)
+# Tabelog 百名店查詢器 (Hyakumeiten Scraper)
 
 這是一個用來自動抓取 [Tabelog 百名店](https://award.tabelog.com/hyakumeiten) 資訊的爬蟲工具。目前設定為抓取 **長野縣 (Nagano)** 的所有百名店資料。
 

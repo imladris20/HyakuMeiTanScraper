@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tabelog 百名店爬蟲 UI",
+  title: "Tabelog 百名店查詢器 UI",
   description: "選擇都道府縣並執行爬蟲，查看與下載結果",
 };
 
