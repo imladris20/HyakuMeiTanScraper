@@ -101,6 +101,7 @@ export default function HomePage() {
                 value={pref}
                 onChange={(e) => setPref(e.target.value)}
                 disabled={loading}
+                suppressHydrationWarning={true}
               >
                 {PREF_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
