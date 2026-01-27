@@ -102,8 +102,14 @@ const MASTER_CATEGORY_MAP: Record<
 
 console.log("🚀 [Node/npm] 開始執行 Tabelog 百名店爬蟲...");
 
-// 使用 channel: 'chrome' 確保 Windows 下能順利執行
-const browser = await chromium.launch({ headless: false, channel: "chrome" });
+// 使用 Playwright 內建 Chromium（macOS 下 channel: 'chrome' 容易啟動後即關閉）
+const launchOptions: Parameters<typeof chromium.launch>[0] = {
+  headless: false,
+};
+if (process.platform === "win32") {
+  launchOptions.channel = "chrome";
+}
+const browser = await chromium.launch(launchOptions);
 const page = await browser.newPage();
 
 console.log("0. 準備前往網址...");
