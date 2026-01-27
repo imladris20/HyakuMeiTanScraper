@@ -64,12 +64,12 @@
 
 ### 0. 安裝 bun 到你的 node 環境中
 
+bash, linux, macOs 請執行：
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-或是
-
+windows 系統請執行：
 ```bash
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
