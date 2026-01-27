@@ -1,0 +1,30 @@
+{
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "semi": true,
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "importOrder": [
+    "^react(|-dom|-router-dom)$",
+    "^next(|/.*)$",
+    "<THIRD_PARTY_MODULES>",
+    "^hooks/(.*)$",
+    "^utils/(.*)$",
+    "^components/(.*)$",
+    "^styles/(.*)$",
+    "^@/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "overrides": [
+    {
+      "files": "*.tsx",
+      "options": {
+        "parser": "babel-ts"
+      }
+    }
+  ]
+}

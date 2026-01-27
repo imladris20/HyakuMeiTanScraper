@@ -1,57 +1,8 @@
- "use client";
+'use client';
 
-import { useState } from "react";
-import type { IShop } from "../types";
-
-const PREF_OPTIONS: { value: string; label: string }[] = [
-  { value: "hokkaido", label: "北海道" },
-  { value: "aomori", label: "青森" },
-  { value: "akita", label: "秋田" },
-  { value: "yamagata", label: "山形" },
-  { value: "iwate", label: "岩手" },
-  { value: "miyagi", label: "宮城" },
-  { value: "fukushima", label: "福島" },
-  { value: "tokyo", label: "東京" },
-  { value: "kanagawa", label: "神奈川" },
-  { value: "saitama", label: "埼玉" },
-  { value: "chiba", label: "千葉" },
-  { value: "tochigi", label: "栃木" },
-  { value: "ibaraki", label: "茨城" },
-  { value: "gunma", label: "群馬" },
-  { value: "aichi", label: "愛知" },
-  { value: "gifu", label: "岐阜" },
-  { value: "shizuoka", label: "静岡" },
-  { value: "mie", label: "三重" },
-  { value: "niigata", label: "新潟" },
-  { value: "yamanashi", label: "山梨" },
-  { value: "nagano", label: "長野" },
-  { value: "ishikawa", label: "石川" },
-  { value: "toyama", label: "富山" },
-  { value: "fukui", label: "福井" },
-  { value: "osaka", label: "大阪" },
-  { value: "hyogo", label: "兵庫" },
-  { value: "kyoto", label: "京都" },
-  { value: "shiga", label: "滋賀" },
-  { value: "nara", label: "奈良" },
-  { value: "wakayama", label: "和歌山" },
-  { value: "okayama", label: "岡山" },
-  { value: "hiroshima", label: "広島" },
-  { value: "tottori", label: "鳥取" },
-  { value: "shimane", label: "島根" },
-  { value: "yamaguchi", label: "山口" },
-  { value: "kagawa", label: "香川" },
-  { value: "tokushima", label: "徳島" },
-  { value: "ehime", label: "愛媛" },
-  { value: "kochi", label: "高知" },
-  { value: "fukuoka", label: "福岡" },
-  { value: "saga", label: "佐賀" },
-  { value: "nagasaki", label: "長崎" },
-  { value: "kumamoto", label: "熊本" },
-  { value: "oita", label: "大分" },
-  { value: "miyazaki", label: "宮崎" },
-  { value: "kagoshima", label: "鹿児島" },
-  { value: "okinawa", label: "沖縄" },
-];
+import { useState } from 'react';
+import type { IShop } from '../types';
+import { PREF_OPTIONS } from './constants';
 
 interface ScrapeResponse {
   shops: IShop[];
@@ -59,7 +10,7 @@ interface ScrapeResponse {
 }
 
 export default function HomePage() {
-  const [pref, setPref] = useState<string>("nagano");
+  const [pref, setPref] = useState<string>('nagano');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shops, setShops] = useState<IShop[]>([]);
@@ -71,22 +22,22 @@ export default function HomePage() {
     setShops([]);
 
     try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pref }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "爬蟲執行失敗");
+        throw new Error(data.message || '爬蟲執行失敗');
       }
 
       const data: ScrapeResponse = await res.json();
       setShops(data.shops);
       setCurrentPref(data.pref);
     } catch (e: any) {
-      setError(e.message || "未知錯誤");
+      setError(e.message || '未知錯誤');
     } finally {
       setLoading(false);
     }
@@ -99,16 +50,18 @@ export default function HomePage() {
   };
 
   const downloadUrl =
-    currentPref != null ? `/api/download?pref=${encodeURIComponent(currentPref)}` : null;
+    currentPref != null
+      ? `/api/download?pref=${encodeURIComponent(currentPref)}`
+      : null;
 
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Tabelog 百名店爬蟲</h1>
+      <h1 className="mb-6 text-3xl font-bold">Tabelog 百名店爬蟲</h1>
 
-      <div className="card bg-base-100 shadow mb-8">
+      <div className="card bg-base-100 mb-8 shadow">
         <div className="card-body space-y-4">
           <h2 className="card-title">選擇都道府縣並執行</h2>
-          <p className="text-sm text-base-content/70">
+          <p className="text-base-content/70 text-sm">
             選好都道府縣後按下「執行爬蟲」，會呼叫 Playwright 在伺服端跑一次，
             並同時產生 CSV 與下方表格結果。
           </p>
@@ -137,7 +90,7 @@ export default function HomePage() {
               onClick={handleRun}
               disabled={loading}
             >
-              {loading ? "執行中..." : "執行爬蟲"}
+              {loading ? '執行中...' : '執行爬蟲'}
             </button>
 
             <button
@@ -149,10 +102,7 @@ export default function HomePage() {
             </button>
 
             {downloadUrl && (
-              <a
-                href={downloadUrl}
-                className="btn btn-outline md:ml-auto"
-              >
+              <a href={downloadUrl} className="btn btn-outline md:ml-auto">
                 下載 CSV
               </a>
             )}
@@ -178,12 +128,12 @@ export default function HomePage() {
           </h2>
 
           {shops.length === 0 ? (
-            <p className="text-sm text-base-content/70">
+            <p className="text-base-content/70 text-sm">
               目前尚無結果，請先選擇都道府縣並執行爬蟲。
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table table-zebra table-sm">
+              <table className="table-zebra table-sm table">
                 <thead>
                   <tr>
                     <th>店名</th>
@@ -213,9 +163,9 @@ export default function HomePage() {
                         </a>
                       </td>
                       <td>{shop.rating}</td>
-                      <td>{shop.price ?? "-"}</td>
-                      <td>{shop.closedDay ?? "-"}</td>
-                      <td>{shop.businessHour ?? "-"}</td>
+                      <td>{shop.price ?? '-'}</td>
+                      <td>{shop.closedDay ?? '-'}</td>
+                      <td>{shop.businessHour ?? '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -227,4 +177,3 @@ export default function HomePage() {
     </main>
   );
 }
-

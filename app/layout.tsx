@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Tabelog 百名店爬蟲 UI",
-  description: "選擇都道府縣並執行爬蟲，查看與下載結果",
+  title: 'Tabelog 百名店爬蟲 UI',
+  description: '選擇都道府縣並執行爬蟲，查看與下載結果',
 };
 
 export default function RootLayout({
@@ -13,10 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-Hant">
-      <body className="min-h-screen bg-base-200 text-base-content">
+      <body className="bg-base-200 text-base-content min-h-screen">
         {children}
       </body>
     </html>
   );
 }
-
