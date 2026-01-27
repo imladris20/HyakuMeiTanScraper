@@ -138,7 +138,7 @@ export async function scrapeHyakumeiten(
 
       const finalUrl = currentUrl.split("?")[0] || currentUrl;
       if (visitedFinalUrls.has(finalUrl)) {
-        log(`   ⏭️  已訪問過此頁面，跳過`);
+        log(`⏭️  已訪問過此頁面，跳過`);
         continue;
       }
 
@@ -219,7 +219,7 @@ export async function scrapeHyakumeiten(
       );
 
       if (shops.length > 0) {
-        log(`   🎉 找到 ${shops.length} 間`);
+        log(`🎉 找到 ${shops.length} 間店家`);
         allShops.push(...shops);
       }
     } catch (e) {
@@ -236,14 +236,16 @@ export async function scrapeHyakumeiten(
     }
   }
   const uniqueShops = Array.from(uniqueShopsMap.values());
-  log(`   原始: ${allShops.length} 間，去重後: ${uniqueShops.length} 間\n`);
+  log(
+    `原始: ${allShops.length} 間，去掉重複的店家後剩下: ${uniqueShops.length} 間\n`
+  );
 
   log("5. (並行) 訪問每個店舗詳情頁取得資訊...");
   log(`📋 共 ${uniqueShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`);
 
   async function processShop(shop: IShop, browserInstance: Browser) {
     const page = await browserInstance.newPage();
-    page.setDefaultTimeout(15000);
+    page.setDefaultTimeout(30000);
 
     try {
       await page.goto(shop.url, { waitUntil: "domcontentloaded" });
