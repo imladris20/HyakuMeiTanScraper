@@ -76,7 +76,7 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "tachinomi",
-    "traditionalChineseName": "立吞",
+    "traditionalChineseName": "立式酒吧",
     "japaneseName": "立ち飲み"
   },
   {
@@ -351,7 +351,7 @@ export const HYAKUMEITAN_CATEGORY_OUTPUT = [
   },
   {
     "name": "kissaten",
-    "traditionalChineseName": "純喫茶",
+    "traditionalChineseName": "老派咖啡廳",
     "japaneseName": "喫茶店"
   }
 ];

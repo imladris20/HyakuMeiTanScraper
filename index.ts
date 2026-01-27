@@ -7,7 +7,7 @@ import type { ICategory, IShop } from "./types";
 const BASE_URL = "https://award.tabelog.com";
 const CONCURRENCY_LIMIT = 5;
 
-console.log("🚀 [Node/npm] 開始執行 Tabelog 百名店爬蟲 (優化版)...");
+console.log("🚀 [Node/npm] 開始執行 Tabelog 百名店爬蟲...");
 
 // 1. 初始化瀏覽器
 const launchOptions: Parameters<typeof chromium.launch>[0] = {
