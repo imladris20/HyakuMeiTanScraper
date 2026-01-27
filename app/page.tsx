@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import type { IShop } from "../types";
-import { PREF_OPTIONS } from "./constants";
+import { PREF_OPTIONS } from "../legacy/constants";
+import type { IShop } from "../legacy/types";
 
 import icon from "./assets/icon.png";
 interface ScrapeResponse {
