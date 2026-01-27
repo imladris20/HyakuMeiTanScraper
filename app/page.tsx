@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import type { IShop } from '../types';
-import { PREF_OPTIONS } from './constants';
+import { useState } from "react";
+import type { IShop } from "../types";
+import { PREF_OPTIONS } from "./constants";
 
 interface ScrapeResponse {
   shops: IShop[];
@@ -10,7 +10,7 @@ interface ScrapeResponse {
 }
 
 export default function HomePage() {
-  const [pref, setPref] = useState<string>('nagano');
+  const [pref, setPref] = useState<string>("nagano");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shops, setShops] = useState<IShop[]>([]);
@@ -22,22 +22,22 @@ export default function HomePage() {
     setShops([]);
 
     try {
-      const res = await fetch('/api/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pref }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || '爬蟲執行失敗');
+        throw new Error(data.message || "爬蟲執行失敗");
       }
 
       const data: ScrapeResponse = await res.json();
       setShops(data.shops);
       setCurrentPref(data.pref);
     } catch (e: any) {
-      setError(e.message || '未知錯誤');
+      setError(e.message || "未知錯誤");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function HomePage() {
               onClick={handleRun}
               disabled={loading}
             >
-              {loading ? '執行中...' : '執行爬蟲'}
+              {loading ? "執行中..." : "執行爬蟲"}
             </button>
 
             <button
@@ -163,9 +163,9 @@ export default function HomePage() {
                         </a>
                       </td>
                       <td>{shop.rating}</td>
-                      <td>{shop.price ?? '-'}</td>
-                      <td>{shop.closedDay ?? '-'}</td>
-                      <td>{shop.businessHour ?? '-'}</td>
+                      <td>{shop.price ?? "-"}</td>
+                      <td>{shop.closedDay ?? "-"}</td>
+                      <td>{shop.businessHour ?? "-"}</td>
                     </tr>
                   ))}
                 </tbody>

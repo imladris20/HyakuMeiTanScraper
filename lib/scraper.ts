@@ -1,12 +1,12 @@
-import { createObjectCsvWriter } from 'csv-writer';
-import * as fs from 'fs';
-import * as path from 'path';
-import { type Browser, chromium } from 'playwright';
+import { createObjectCsvWriter } from "csv-writer";
+import * as fs from "fs";
+import * as path from "path";
+import { type Browser, chromium } from "playwright";
 
-import { CATEGORY_TRANSLATION_MAP } from '../map';
-import type { ICategory, IShop } from '../types';
+import { CATEGORY_TRANSLATION_MAP } from "../map";
+import type { ICategory, IShop } from "../types";
 
-const BASE_URL = 'https://award.tabelog.com';
+const BASE_URL = "https://award.tabelog.com";
 const CONCURRENCY_LIMIT = 5;
 
 interface ScrapeResult {
@@ -18,8 +18,8 @@ async function createBrowser(): Promise<Browser> {
   const launchOptions: Parameters<typeof chromium.launch>[0] = {
     headless: true,
   };
-  if (process.platform === 'win32') {
-    launchOptions.channel = 'chrome';
+  if (process.platform === "win32") {
+    launchOptions.channel = "chrome";
   }
   return chromium.launch(launchOptions);
 }
@@ -28,13 +28,13 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
   const browser = await createBrowser();
   const page = await browser.newPage();
 
-  console.log('🚀 開始執行 Tabelog 百名店爬蟲 (pref=%s)...', pref);
+  console.log("🚀 開始執行 Tabelog 百名店爬蟲 (pref=%s)...", pref);
 
-  console.log('0. 準備前往網址...');
-  await page.goto(`${BASE_URL}/hyakumeiten`, { waitUntil: 'domcontentloaded' });
+  console.log("0. 準備前往網址...");
+  await page.goto(`${BASE_URL}/hyakumeiten`, { waitUntil: "domcontentloaded" });
 
   // 1. 抓取所有類別 Slug
-  console.log('1. 抓取所有類別 Slug');
+  console.log("1. 抓取所有類別 Slug");
   const rawSlugs = await page.evaluate(() => {
     const anchors = Array.from(
       document.querySelectorAll('a[href*="/hyakumeiten/"]')
@@ -42,7 +42,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
 
     return anchors
       .map((a) => {
-        const href = a.getAttribute('href') || '';
+        const href = a.getAttribute("href") || "";
         const match = href.match(/\/hyakumeiten\/([a-z0-9_]+)/);
         if (!match) return null;
         return match[1];
@@ -51,12 +51,12 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       .filter((v, i, a) => a.indexOf(v) === i);
   });
 
-  console.log('2. 處理 Slug 並對應到 Master Dictionary');
+  console.log("2. 處理 Slug 並對應到 Master Dictionary");
   const categoryList: ICategory[] = rawSlugs
-    .filter((slug) => !['top', 'history', 'msg'].includes(slug))
+    .filter((slug) => !["top", "history", "msg"].includes(slug))
     .map((fullSlug) => {
       let lookupKey = fullSlug;
-      let baseSlug = fullSlug.replace(/_east$|_west$|_tokyo$/, '');
+      let baseSlug = fullSlug.replace(/_east$|_west$|_tokyo$/, "");
 
       let finalKey = CATEGORY_TRANSLATION_MAP[lookupKey] ? lookupKey : baseSlug;
       const data = CATEGORY_TRANSLATION_MAP[finalKey];
@@ -69,7 +69,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
         };
       }
 
-      const cleanedZhName = data.zh.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+      const cleanedZhName = data.zh.replace(/\s*[\(（].*?[\)）]/g, "").trim();
 
       return {
         name: fullSlug,
@@ -85,7 +85,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
   const allShops: IShop[] = [];
   const visitedFinalUrls = new Set<string>();
 
-  console.log('3. 遍歷每個類別抓取店家');
+  console.log("3. 遍歷每個類別抓取店家");
   for (const cat of categoryList) {
     console.log(
       `\n🔍 搜尋類別：${cat.traditionalChineseName} (${cat.name})...`
@@ -94,15 +94,15 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     const url = `${BASE_URL}/hyakumeiten/${cat.name}?pref=${pref}`;
 
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.goto(url, { waitUntil: "domcontentloaded" });
 
       try {
         await Promise.race([
           page.waitForSelector(
-            '.hyakumeiten-shop__item, .hyakumeiten-shop-item',
+            ".hyakumeiten-shop__item, .hyakumeiten-shop-item",
             { timeout: 3000 }
           ),
-          page.getByText('該当する店舗はありません').waitFor({ timeout: 3000 }),
+          page.getByText("該当する店舗はありません").waitFor({ timeout: 3000 }),
           page
             .locator(`a[href*="tabelog.com/${pref}/A"]`)
             .first()
@@ -115,21 +115,21 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
       const currentUrl = page.url();
       if (!currentUrl) continue;
 
-      const finalUrl = currentUrl.split('?')[0] || currentUrl;
+      const finalUrl = currentUrl.split("?")[0] || currentUrl;
       if (visitedFinalUrls.has(finalUrl)) {
         console.log(`   ⏭️  已訪問過此頁面，跳過`);
         continue;
       }
 
       if (
-        currentUrl.includes('award.tabelog.com/hyakumeiten/msg') ||
+        currentUrl.includes("award.tabelog.com/hyakumeiten/msg") ||
         currentUrl === `${BASE_URL}/hyakumeiten`
       ) {
         continue;
       }
       visitedFinalUrls.add(finalUrl);
 
-      const noResult = await page.getByText('該当する店舗はありません').count();
+      const noResult = await page.getByText("該当する店舗はありません").count();
       if (noResult > 0) continue;
 
       const shopUrlPattern = new RegExp(
@@ -143,25 +143,25 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
           const results: any[] = [];
 
           const items = document.querySelectorAll(
-            '.hyakumeiten-shop__item, .hyakumeiten-shop-item'
+            ".hyakumeiten-shop__item, .hyakumeiten-shop-item"
           );
           items.forEach((item) => {
             const nameEl = item.querySelector(
-              '.hyakumeiten-shop__name a, .hyakumeiten-shop-item__name a'
+              ".hyakumeiten-shop__name a, .hyakumeiten-shop-item__name a"
             );
             const areaEl = item.querySelector(
-              '.hyakumeiten-shop__area, .hyakumeiten-shop-item__area'
+              ".hyakumeiten-shop__area, .hyakumeiten-shop-item__area"
             );
             const ratingEl = item.querySelector(
-              '.hyakumeiten-shop__rating, .hyakumeiten-shop-item__rating'
+              ".hyakumeiten-shop__rating, .hyakumeiten-shop-item__rating"
             );
             if (nameEl) {
               results.push({
                 category: categoryName,
                 name: nameEl.textContent?.trim(),
                 url: (nameEl as HTMLAnchorElement).href,
-                address: areaEl?.textContent?.trim() || '',
-                rating: ratingEl?.textContent?.trim() || '',
+                address: areaEl?.textContent?.trim() || "",
+                rating: ratingEl?.textContent?.trim() || "",
               });
             }
           });
@@ -172,19 +172,19 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
               'a[href*="tabelog.com/"]'
             );
             links.forEach((a) => {
-              const href = a.href.replace(/#.*$/, '').replace(/\/$/, '');
+              const href = a.href.replace(/#.*$/, "").replace(/\/$/, "");
               if (!shopUrlRe.test(href) || seen.has(href)) return;
               seen.add(href);
-              const text = a.textContent?.trim() || '';
-              const prefIdx = text.indexOf('長野'); // 原本針對長野，這裡僅作為保守備援
+              const text = a.textContent?.trim() || "";
+              const prefIdx = text.indexOf("長野"); // 原本針對長野，這裡僅作為保守備援
               const name = prefIdx > 0 ? text.slice(0, prefIdx).trim() : text;
-              const address = prefIdx >= 0 ? text.slice(prefIdx).trim() : '';
+              const address = prefIdx >= 0 ? text.slice(prefIdx).trim() : "";
               results.push({
                 category: categoryName,
                 name: name || href,
                 url: a.href,
                 address,
-                rating: '',
+                rating: "",
               });
             });
           }
@@ -206,10 +206,10 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     }
   }
 
-  console.log('\n4. 去除重複店家...');
+  console.log("\n4. 去除重複店家...");
   const uniqueShopsMap = new Map<string, IShop>();
   for (const shop of allShops) {
-    const normalizedUrl = shop.url.replace(/\/$/, '');
+    const normalizedUrl = shop.url.replace(/\/$/, "");
     if (!uniqueShopsMap.has(normalizedUrl)) {
       uniqueShopsMap.set(normalizedUrl, shop);
     }
@@ -219,7 +219,7 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     `   原始: ${allShops.length} 間，去重後: ${uniqueShops.length} 間\n`
   );
 
-  console.log('5. (並行) 訪問每個店舗詳情頁取得資訊...');
+  console.log("5. (並行) 訪問每個店舗詳情頁取得資訊...");
   console.log(
     `📋 共 ${uniqueShops.length} 間店舗，並行數: ${CONCURRENCY_LIMIT}\n`
   );
@@ -229,112 +229,112 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     page.setDefaultTimeout(15000);
 
     try {
-      await page.goto(shop.url, { waitUntil: 'domcontentloaded' });
+      await page.goto(shop.url, { waitUntil: "domcontentloaded" });
 
       try {
-        await page.waitForSelector('.rstinfo-table', { timeout: 5000 });
+        await page.waitForSelector(".rstinfo-table", { timeout: 5000 });
       } catch {
         // ignore
       }
 
       const detailInfo = await page.evaluate(() => {
         const nameEl =
-          document.querySelector('h1.display-name') ||
-          document.querySelector('.display-name') ||
-          document.querySelector('h1');
-        let name = nameEl?.textContent?.trim() || '';
+          document.querySelector("h1.display-name") ||
+          document.querySelector(".display-name") ||
+          document.querySelector("h1");
+        let name = nameEl?.textContent?.trim() || "";
         if (name) {
-          const lines = name.split('\n');
+          const lines = name.split("\n");
           if (lines.length > 0 && lines[0]) name = lines[0].trim();
         }
 
         const ratingEl =
-          document.querySelector('.rdheader-rating__score-val-dtl') ||
-          document.querySelector('.rdheader-rating__score-val') ||
-          document.querySelector('.rating-score');
-        const rating = ratingEl?.textContent?.trim() || '';
+          document.querySelector(".rdheader-rating__score-val-dtl") ||
+          document.querySelector(".rdheader-rating__score-val") ||
+          document.querySelector(".rating-score");
+        const rating = ratingEl?.textContent?.trim() || "";
 
-        let address = '';
+        let address = "";
         const addressEl =
-          document.querySelector('.rstinfo-table__address') ||
-          document.querySelector('.rstinfo-table__address-note');
+          document.querySelector(".rstinfo-table__address") ||
+          document.querySelector(".rstinfo-table__address-note");
         if (addressEl) {
-          address = addressEl.textContent?.trim().replace(/\s+/g, ' ') || '';
+          address = addressEl.textContent?.trim().replace(/\s+/g, " ") || "";
         } else {
           const rows = Array.from(
-            document.querySelectorAll('.rstinfo-table tr')
+            document.querySelectorAll(".rstinfo-table tr")
           );
           const addressRow = rows.find((r) =>
-            r.querySelector('th')?.textContent?.includes('住所')
+            r.querySelector("th")?.textContent?.includes("住所")
           );
           if (addressRow)
             address =
               addressRow
-                .querySelector('td')
+                .querySelector("td")
                 ?.textContent?.trim()
-                .replace(/\s+/g, ' ') || '';
+                .replace(/\s+/g, " ") || "";
         }
 
-        let price = '';
-        let closedDay = '';
-        let businessHour = '';
+        let price = "";
+        let closedDay = "";
+        let businessHour = "";
 
-        const rows = Array.from(document.querySelectorAll('.rstinfo-table tr'));
+        const rows = Array.from(document.querySelectorAll(".rstinfo-table tr"));
 
         rows.forEach((row) => {
-          const headerText = row.querySelector('th')?.textContent?.trim() || '';
-          const dataEl = row.querySelector('td');
-          const dataText = dataEl?.textContent?.trim() || '';
+          const headerText = row.querySelector("th")?.textContent?.trim() || "";
+          const dataEl = row.querySelector("td");
+          const dataText = dataEl?.textContent?.trim() || "";
 
-          if (headerText.includes('予算')) {
+          if (headerText.includes("予算")) {
             const priceEl =
               dataEl?.querySelector(
-                '.rstinfo-table__budget-val, .c-rating__val'
-              ) || dataEl?.querySelector('em');
+                ".rstinfo-table__budget-val, .c-rating__val"
+              ) || dataEl?.querySelector("em");
             if (priceEl) {
-              price = priceEl.textContent?.trim() || '';
+              price = priceEl.textContent?.trim() || "";
             } else {
-              price = dataText.split('\n')[0]?.trim() || '';
+              price = dataText.split("\n")[0]?.trim() || "";
             }
           }
 
-          if (headerText.includes('営業時間')) {
+          if (headerText.includes("営業時間")) {
             businessHour = dataText;
           }
 
-          if (headerText.includes('定休日')) {
+          if (headerText.includes("定休日")) {
             closedDay = dataText;
           }
         });
 
         if (price) {
-          if (price.includes('～'))
-            price = price.replace(/～/g, '-').replace(/￥/g, 'JPY ');
-          else if (price.includes('￥')) price = price.replace(/￥/g, 'JPY ');
+          if (price.includes("～"))
+            price = price.replace(/～/g, "-").replace(/￥/g, "JPY ");
+          else if (price.includes("￥")) price = price.replace(/￥/g, "JPY ");
         }
 
-        if (!closedDay && businessHour.includes('定休日')) {
+        if (!closedDay && businessHour.includes("定休日")) {
           const match = businessHour.match(/定休日[:：]?\s*([^\n]+)/);
           if (match) {
-            closedDay = match[1] || '';
+            closedDay = match[1] || "";
           } else {
-            const days = ['月', '火', '水', '木', '金', '土', '日'];
+            const days = ["月", "火", "水", "木", "金", "土", "日"];
             const closedDays = days.filter((d) =>
               businessHour.includes(`定休日`)
             );
-            if (closedDays.length > 0) closedDay = '參見營業時間';
+            if (closedDays.length > 0) closedDay = "參見營業時間";
           }
         }
 
         if (closedDay) {
           const dayMatches = closedDay.match(/([月火水木金土日])曜日/g);
           if (dayMatches) {
-            closedDay = dayMatches.map((m) => m.charAt(0)).join('・');
+            closedDay = dayMatches.map((m) => m.charAt(0)).join("・");
           }
         }
 
         if (businessHour) {
-          businessHour = businessHour.replace(/\s+/g, ' ').trim();
+          businessHour = businessHour.replace(/\s+/g, " ").trim();
         }
 
         return { name, rating, address, price, closedDay, businessHour };
@@ -378,12 +378,12 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
 
   await browser.close();
 
-  console.log('\n6. 輸出 CSV');
+  console.log("\n6. 輸出 CSV");
   console.log(
     `\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${pref} 的百名店。`
   );
 
-  const outputDir = path.join(process.cwd(), 'output');
+  const outputDir = path.join(process.cwd(), "output");
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -395,27 +395,27 @@ export async function scrapeHyakumeiten(pref: string): Promise<ScrapeResult> {
     const csvWriter = createObjectCsvWriter({
       path: outputPath,
       header: [
-        { id: 'name', title: '店名' },
-        { id: 'address', title: '地址' },
-        { id: 'category', title: '類別' },
-        { id: 'url', title: 'URL' },
-        { id: 'rating', title: '評分' },
-        { id: 'price', title: '價格' },
-        { id: 'closedDay', title: '公休日' },
-        { id: 'businessHour', title: '營業時間' },
+        { id: "name", title: "店名" },
+        { id: "address", title: "地址" },
+        { id: "category", title: "類別" },
+        { id: "url", title: "URL" },
+        { id: "rating", title: "評分" },
+        { id: "price", title: "價格" },
+        { id: "closedDay", title: "公休日" },
+        { id: "businessHour", title: "營業時間" },
       ],
     });
 
     await csvWriter.writeRecords(uniqueShops);
 
-    const content = fs.readFileSync(outputPath, 'utf8');
-    fs.writeFileSync(outputPath, '\uFEFF' + content);
+    const content = fs.readFileSync(outputPath, "utf8");
+    fs.writeFileSync(outputPath, "\uFEFF" + content);
 
     console.log(
       `💾 檔案已儲存 (含 BOM): ${path.relative(process.cwd(), outputPath)}`
     );
   } else {
-    console.log('⚠️ 未找到任何店家。');
+    console.log("⚠️ 未找到任何店家。");
   }
 
   return {
