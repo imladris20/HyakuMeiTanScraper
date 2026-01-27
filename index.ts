@@ -353,7 +353,7 @@ console.log(`\n📊 總結：共找到 ${allNaganoShops.length} 間位於長野�
 
 if (allNaganoShops.length > 0) {
   const csvWriter = createObjectCsvWriter({
-    path: "nagano_hyakumeiten.csv",
+    path: "output/nagano_hyakumeiten.csv",
     header: [
       { id: "name", title: "Name" },
       { id: "address", title: "Address" },
