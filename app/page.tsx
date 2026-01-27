@@ -210,9 +210,12 @@ export default function HomePage() {
       <div className="card bg-base-100 shadow">
         <div className="card-body">
           {currentPref && (
-          <h2 className="card-title mb-4">
-            查詢結果：{PREF_OPTIONS.find(p => p.value === currentPref)?.label || currentPref}共有 {shops.length} 間百名店
-          </h2>
+            <h2 className="card-title mb-4">
+              查詢結果：
+              {PREF_OPTIONS.find((p) => p.value === currentPref)?.label ||
+                currentPref}
+              共有 {shops.length} 間百名店
+            </h2>
           )}
 
           {shops.length === 0 ? (
@@ -251,9 +254,7 @@ export default function HomePage() {
                         </a>
                       </td>
                       <td>{shop.rating}</td>
-                      <td className="whitespace-nowrap">
-                        {shop.price ?? "-"}
-                      </td>
+                      <td className="whitespace-nowrap">{shop.price ?? "-"}</td>
                       <td>{shop.closedDay ?? "-"}</td>
                       <td>{shop.businessHour ?? "-"}</td>
                     </tr>
@@ -262,9 +263,8 @@ export default function HomePage() {
               </table>
 
               <div className="mt-4 flex items-center justify-between gap-4">
-                <div className="text-sm text-base-content/70">
-                  顯示第{" "}
-                  {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
+                <div className="text-base-content/70 text-sm">
+                  顯示第 {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
                   {Math.min(currentPage * PAGE_SIZE, shops.length)} 筆，共{" "}
                   {shops.length} 筆
                 </div>
@@ -272,9 +272,7 @@ export default function HomePage() {
                 <div className="join">
                   <button
                     className="btn btn-sm join-item"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.max(1, p - 1))
-                    }
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     上一頁
@@ -285,9 +283,7 @@ export default function HomePage() {
                   <button
                     className="btn btn-sm join-item"
                     onClick={() =>
-                      setCurrentPage((p) =>
-                        Math.min(totalPages, p + 1)
-                      )
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages}
                   >

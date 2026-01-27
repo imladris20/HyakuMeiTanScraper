@@ -399,7 +399,9 @@ export async function scrapeHyakumeiten(
   await browser.close();
 
   log("\n6. 輸出 CSV");
-  log(`\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${PREF_OPTIONS.find(p => p.value === pref)?.label || pref} 的百名店。`);
+  log(
+    `\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${PREF_OPTIONS.find((p) => p.value === pref)?.label || pref} 的百名店。`
+  );
 
   const outputDir = path.join(process.cwd(), "output");
   if (!fs.existsSync(outputDir)) {
