@@ -9,15 +9,16 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
+    "daisyui": "^5.5.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.23",
     "csv-writer": "^1.6.0",
-    "daisyui": "^5.5.14",
     "next": "^16.1.5",
     "playwright": "^1.58.0",
     "postcss": "^8.5.6",
