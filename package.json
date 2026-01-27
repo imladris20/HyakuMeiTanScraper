@@ -1,8 +1,6 @@
 {
   "name": "hyakumeitan-scraper",
   "module": "index.ts",
-  "type": "module",
-  "private": true,
   "scripts": {
     "dev": "tsx index.ts"
   },
