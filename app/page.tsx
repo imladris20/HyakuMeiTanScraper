@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { IShop } from "../types";
 import { PREF_OPTIONS } from "./constants";
 
@@ -15,13 +15,29 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [shops, setShops] = useState<IShop[]>([]);
   const [currentPref, setCurrentPref] = useState<string | null>(null);
+   const [consoleLines, setConsoleLines] = useState<string[]>([]);
+   const consoleRef = useRef<HTMLDivElement | null>(null);
+
+  const appendLog = (message: string) => {
+    const now = new Date();
+    const ts = now.toTimeString().slice(0, 8); // HH:MM:SS
+    setConsoleLines((prev) => [...prev, `[${ts}] ${message}`]);
+  };
+
+  useEffect(() => {
+    const el = consoleRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [consoleLines]);
 
   const handleRun = async () => {
+    appendLog(`開始查詢（pref=${pref}）`);
     setError(null);
     setLoading(true);
     setShops([]);
 
     try {
+      appendLog("已送出 API 請求到 /api/scrape");
       const res = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -30,15 +46,19 @@ export default function HomePage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "爬蟲執行失敗");
+        appendLog(`伺服端回傳錯誤狀態碼：${res.status}`);
+        throw new Error(data.message || "查詢失敗");
       }
 
       const data: ScrapeResponse = await res.json();
       setShops(data.shops);
       setCurrentPref(data.pref);
+      appendLog(`查詢完成，共取得 ${data.shops.length} 間店家`);
     } catch (e: any) {
+      appendLog(`發生錯誤：${e?.message ?? String(e)}`);
       setError(e.message || "未知錯誤");
     } finally {
+      appendLog("執行結束");
       setLoading(false);
     }
   };
@@ -47,6 +67,8 @@ export default function HomePage() {
     setShops([]);
     setCurrentPref(null);
     setError(null);
+    setConsoleLines([]);
+    appendLog("已清除畫面與結果");
   };
 
   const downloadUrl =
@@ -62,7 +84,7 @@ export default function HomePage() {
         <div className="card-body space-y-4">
           <h2 className="card-title">選擇都道府縣並執行</h2>
           <p className="text-base-content/70 text-sm">
-            選好都道府縣後按下「執行爬蟲」，會呼叫 Playwright 在伺服端跑一次，
+            選好都道府縣後按下「查詢」，會呼叫 Playwright 在伺服端跑一次，
             並同時產生 CSV 與下方表格結果。
           </p>
 
@@ -90,7 +112,7 @@ export default function HomePage() {
               onClick={handleRun}
               disabled={loading}
             >
-              {loading ? "執行中..." : "執行爬蟲"}
+              {loading ? "執行中..." : "查詢"}
             </button>
 
             <button
@@ -116,10 +138,34 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div className="card bg-base-100 mb-8 shadow">
+        <div className="card-body space-y-4">
+          <h2 className="card-title mb-2">Console 狀態</h2>
+          <div className="mockup-window border border-base-300 bg-base-300/40">
+            <div
+              ref={consoleRef}
+              className="bg-base-900 text-base-100 px-4 py-3 h-64 overflow-y-auto font-mono text-xs"
+            >
+              {consoleLines.length === 0 ? (
+                <span className="text-base-content/60">
+                  尚未開始執行，請先點擊上方「查詢」。
+                </span>
+              ) : (
+                consoleLines.map((line, idx) => (
+                  <div key={idx} className="whitespace-pre-wrap">
+                    {line}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="card bg-base-100 shadow">
         <div className="card-body">
           <h2 className="card-title mb-4">
-            爬蟲結果
+            查詢結果
             {currentPref && (
               <span className="badge badge-outline ml-2">
                 Pref: {currentPref}
@@ -129,7 +175,7 @@ export default function HomePage() {
 
           {shops.length === 0 ? (
             <p className="text-base-content/70 text-sm">
-              目前尚無結果，請先選擇都道府縣並執行爬蟲。
+              目前尚無結果，請先選擇都道府縣並查詢。
             </p>
           ) : (
             <div className="overflow-x-auto">

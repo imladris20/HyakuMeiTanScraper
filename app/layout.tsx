@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tabelog 百名店查詢器 UI",
-  description: "選擇都道府縣並執行爬蟲，查看與下載結果",
+  title: "Tabelog 百名店查詢器",
+  description: "選擇都道府縣後即可查詢，等待完成後就可以下載 CSV 檔",
 };
 
 export default function RootLayout({

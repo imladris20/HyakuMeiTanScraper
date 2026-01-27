@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json(
-      { message: "找不到對應的 CSV 檔案，請先執行爬蟲。" },
+      { message: "找不到對應的 CSV 檔案，請先執行查詢。" },
       { status: 404 }
     );
   }
