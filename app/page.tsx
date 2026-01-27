@@ -209,14 +209,11 @@ export default function HomePage() {
 
       <div className="card bg-base-100 shadow">
         <div className="card-body">
+          {currentPref && (
           <h2 className="card-title mb-4">
-            查詢結果
-            {currentPref && (
-              <span className="badge badge-outline ml-2">
-                Pref: {currentPref}
-              </span>
-            )}
+            查詢結果：{PREF_OPTIONS.find(p => p.value === currentPref)?.label || currentPref}共有 {shops.length} 間百名店
           </h2>
+          )}
 
           {shops.length === 0 ? (
             <p className="text-base-content/70 text-sm">
