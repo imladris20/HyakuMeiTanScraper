@@ -78,7 +78,7 @@ export default function HomePage() {
 
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
-      <div className="flex items-center gap-4 mb-6">
+      <div className="mb-6 flex items-center gap-4">
         <Image src={icon} alt="Tabelog 百名店查詢器" width={128} height={80} />
         <h1 className="text-3xl font-bold">Tabelog 百名店查詢器</h1>
       </div>
