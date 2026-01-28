@@ -9,17 +9,13 @@ export interface IShop {
   name: string;
   url: string;
   address: string;
-  rating: string;
-  price?: string;
-  closedDay?: string;
-  businessHour?: string;
-}
-
-export interface IShopExtended extends Omit<IShop, "rating"> {
+  rating: number;
+  price: string;
+  closedDay: string;
+  businessHour: string;
   prefecture: string;
   city: string;
-  thumbnailUrl?: string;
+  thumbnailUrl: string;
   googleMapUrl?: string;
   googleMapRating?: number;
-  rating: number;
 }

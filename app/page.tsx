@@ -2,21 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import type { IShopExtended } from "../lib/types";
+import type { IShop } from "../lib/types";
 import icon from "./assets/icon.png";
 
-// Define a type for our loaded data to avoid import errors if file doesn't exist yet
-// We will fetch this data or import it.
-// Since the file might not exist at build time, it's safer to fetch it from an API or public folder
-// BUT, for this specific request "user filters... direct from json", let's assume we can import it or load it via a server action/api.
-// To keep it simple and robust, let's create a small client-side loader that tries to fetch a static file or API.
-// Placing the JSON in `public/data/shops.json` would be easiest for a client-side fetch,
-// BUT the scraper saves to `data/shops.json` (server-side).
-// So I will make a Route Handler to serve this file.
-
 export default function HomePage() {
-  const [allShops, setAllShops] = useState<IShopExtended[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [allShops, setAllShops] = useState<IShop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // -- UI Input States --
@@ -26,20 +17,6 @@ export default function HomePage() {
   const [inputPrice, setInputPrice] = useState("");
   const [inputSearchTerm, setInputSearchTerm] = useState("");
   const [inputMinRating, setInputMinRating] = useState("");
-
-  // -- Active Search States (Applied on "Search" click) --
-  // Initialize 'active' states with null or empty to signify "not filtered yet"
-  // BUT user wants default view: Top 50 by Rating.
-  // We can treat "empty filters" as "show default top 50" if distinct from "User searched for empty".
-  // Actually, simplest is:
-  // filteredShops = apply filters to allShops.
-  // If active filters are all empty => result is ALL shops.
-  // THEN, we slice filteredShops.
-  // User Rule 4: "Default show top 50. Unless user searches all/unlimited... then show 7097"
-  // Implementation:
-  // We have a flag `isDefaultView` which is true on load.
-  // If `isDefaultView` is true -> sort by rating desc, slice(0, 50).
-  // If `isDefaultView` is false -> show all filtered results.
 
   const [activeSearch, setActiveSearch] = useState({
     pref: "",
@@ -55,9 +32,7 @@ export default function HomePage() {
   // Pagination & Sort
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortKey, setSortKey] = useState<keyof IShopExtended | "tabelogRating">(
-    "tabelogRating"
-  );
+  const [sortKey, setSortKey] = useState<keyof IShop>("rating");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Load Data
@@ -75,7 +50,7 @@ export default function HomePage() {
       } catch (e) {
         setError(e instanceof Error ? e.message : "載入失敗");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     loadData();
@@ -96,9 +71,6 @@ export default function HomePage() {
         if (s.price) prices.add(s.price);
       });
 
-      // Helper to parse price string for sorting
-      // e.g. "￥1,000～￥1,999" -> 1000
-      // "～￥999" -> 0
       const parsePrice = (p: string) => {
         if (!p) return -1;
         if (p.startsWith("～")) return 0;
@@ -119,12 +91,6 @@ export default function HomePage() {
 
   // -- Filtering Logic (Using activeSearch) --
   const filteredShops = useMemo(() => {
-    // If we are in default view, we just ignore filters here or assume they are empty.
-    // Technically, if isDefaultView is true, we act as if we are showing everything (candidates)
-    // but the sorting/slicing will happen next.
-    // However, to be cleaner:
-    // Filter first based on Active Search.
-
     return allShops.filter((shop) => {
       if (activeSearch.pref && shop.prefecture !== activeSearch.pref)
         return false;
@@ -137,7 +103,7 @@ export default function HomePage() {
         return false;
 
       if (activeSearch.minRating) {
-        const r = shop.rating; // It's a number now
+        const r = shop.rating;
         if (r < parseFloat(activeSearch.minRating)) return false;
       }
       return true;
@@ -148,7 +114,6 @@ export default function HomePage() {
   const displayShops = useMemo(() => {
     const final = [...filteredShops];
 
-    // Helper for sorting prices
     const parsePrice = (p: string | undefined) => {
       if (!p || p === "-") return -1;
       if (p.startsWith("～")) return 0;
@@ -159,7 +124,7 @@ export default function HomePage() {
 
     // Sort
     final.sort((a, b) => {
-      const key = sortKey === "tabelogRating" ? "rating" : sortKey;
+      const key = sortKey;
 
       // Price Sort
       if (sortKey === "price") {
@@ -171,12 +136,12 @@ export default function HomePage() {
       }
 
       // Normal Sort
-      let valA: string | number | undefined = a[key as keyof IShopExtended];
-      let valB: string | number | undefined = b[key as keyof IShopExtended];
+      let valA: string | number | undefined = a[key as keyof IShop];
+      let valB: string | number | undefined = b[key as keyof IShop];
 
-      if (sortKey === "rating" || sortKey === "tabelogRating") {
-        valA = a.rating; // It's a number
-        valB = b.rating; // It's a number
+      if (sortKey === "rating") {
+        valA = a.rating;
+        valB = b.rating;
       }
       if (valA === undefined) valA = "";
       if (valB === undefined) valB = "";
@@ -202,7 +167,7 @@ export default function HomePage() {
   );
 
   // -- Handlers --
-  const handleSort = (key: keyof IShopExtended | "tabelogRating") => {
+  const handleSort = (key: keyof IShop) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -225,9 +190,9 @@ export default function HomePage() {
     setIsDefaultView(false);
     // 3. Reset pagination
     setCurrentPage(1);
-    // 4. Rule 5: Always sort by Name when searching
-    setSortKey("name");
-    setSortOrder("asc"); // Usually names A-Z is standard
+    // 4. Rule 5: Always sort by Rating when searching
+    setSortKey("rating");
+    setSortOrder("desc");
   };
 
   const handleClear = () => {
@@ -251,7 +216,7 @@ export default function HomePage() {
 
     // 3. Return to Default View (Top 50)
     setIsDefaultView(true);
-    setSortKey("tabelogRating");
+    setSortKey("rating");
     setSortOrder("desc");
     setCurrentPage(1);
   };
@@ -278,7 +243,6 @@ export default function HomePage() {
       <div className="card bg-base-100 mb-8 shadow-md">
         <div className="card-body">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {/* Search Term - Full Width on Mobile, spans 2 cols on medium, 4 on large */}
             <div className="form-control col-span-1 md:col-span-2 lg:col-span-4">
               <label className="label">
                 <span className="label-text text-base font-semibold">
@@ -293,7 +257,6 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Pref */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text text-base font-semibold">
@@ -314,7 +277,6 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* City */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text text-base font-semibold">
@@ -344,7 +306,6 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Category */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text text-base font-semibold">類別</span>
@@ -363,7 +324,6 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Price */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text text-base font-semibold">
@@ -384,7 +344,6 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Rating */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text text-base font-semibold">
@@ -404,7 +363,6 @@ export default function HomePage() {
               </select>
             </div>
 
-            {/* Action Buttons */}
             <div className="border-base-200 col-span-1 mt-6 flex justify-end gap-3 border-t pt-4 md:col-span-2 lg:col-span-4">
               {!isDefaultView && (
                 <button
@@ -423,7 +381,7 @@ export default function HomePage() {
       </div>
 
       {/* Results */}
-      {loading ? (
+      {isLoading ? (
         <div className="py-20 text-center">
           <span className="loading loading-spinner loading-lg text-primary"></span>
           <p className="text-base-content/70 mt-4">讀取資料中...</p>

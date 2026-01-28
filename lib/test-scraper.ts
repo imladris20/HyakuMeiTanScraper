@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 
-import type { IShopExtended } from "./types";
+import type { IShop } from "./types";
 
 // Test URL: Sushi Tokyo (First shop usually)
 const TEST_CATEGORY_URL =
@@ -76,7 +76,7 @@ async function testScraper() {
   console.log(detailData);
 
   // Final Result Object
-  const finalShop: Partial<IShopExtended> = {
+  const finalShop: Partial<IShop> = {
     ...shopData,
     rating: parseFloat(detailData.ratingRaw),
     prefecture: "TEST_PREF",

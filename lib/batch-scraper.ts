@@ -4,7 +4,7 @@ import { type Browser, chromium } from "playwright";
 
 import { CATEGORY_TRANSLATION_MAP } from "@/lib/constants";
 
-import type { ICategory, IShopExtended } from "./types";
+import type { ICategory, IShop } from "./types";
 
 const BASE_URL = "https://award.tabelog.com";
 const CONCURRENCY_LIMIT = 5;
@@ -99,7 +99,7 @@ export async function scrapeAllShops() {
 
   console.log(`✅ Found ${categoryList.length} Categories.`);
 
-  const allShopsMap = new Map<string, IShopExtended>();
+  const allShopsMap = new Map<string, IShop>();
 
   // 2. Iterate Categories
   for (const cat of categoryList) {
@@ -193,7 +193,7 @@ export async function scrapeAllShops() {
 
   let completedCount = 0;
 
-  async function processShop(shop: IShopExtended, browserInstance: Browser) {
+  async function processShop(shop: IShop, browserInstance: Browser) {
     const p = await browserInstance.newPage();
     try {
       await p.goto(shop.url, { waitUntil: "domcontentloaded", timeout: 30000 });
