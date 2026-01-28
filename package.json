@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "scrape:nagano": "tsx ./legacy/index.ts",
+    "scrape:all": "tsx ./lib/batch-scraper.ts",
     "prepare": "husky"
   },
   "devDependencies": {

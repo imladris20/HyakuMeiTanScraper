@@ -1,301 +1,685 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { PREF_OPTIONS } from "../legacy/constants";
-import type { IShop } from "../legacy/types";
-
+import { useEffect, useMemo, useState } from "react";
+import type { IShopExtended } from "../lib/batch-scraper";
 import icon from "./assets/icon.png";
-type StreamEvent =
-  | { type: "log"; message: string }
-  | { type: "result"; pref: string; shops: IShop[] }
-  | { type: "error"; message: string };
+
+// Define a type for our loaded data to avoid import errors if file doesn't exist yet
+// We will fetch this data or import it.
+// Since the file might not exist at build time, it's safer to fetch it from an API or public folder
+// BUT, for this specific request "user filters... direct from json", let's assume we can import it or load it via a server action/api.
+// To keep it simple and robust, let's create a small client-side loader that tries to fetch a static file or API.
+// Placing the JSON in `public/data/shops.json` would be easiest for a client-side fetch,
+// BUT the scraper saves to `data/shops.json` (server-side).
+// So I will make a Route Handler to serve this file.
 
 export default function HomePage() {
-  const [pref, setPref] = useState<string>("nagano");
-  const [loading, setLoading] = useState(false);
+  const [allShops, setAllShops] = useState<IShopExtended[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [shops, setShops] = useState<IShop[]>([]);
-  const [currentPref, setCurrentPref] = useState<string | null>(null);
-  const [consoleLines, setConsoleLines] = useState<string[]>([]);
+
+  // -- UI Input States --
+  const [inputPref, setInputPref] = useState("");
+  const [inputCity, setInputCity] = useState("");
+  const [inputCategory, setInputCategory] = useState("");
+  const [inputPrice, setInputPrice] = useState("");
+  const [inputSearchTerm, setInputSearchTerm] = useState("");
+  const [inputMinRating, setInputMinRating] = useState("");
+
+  // -- Active Search States (Applied on "Search" click) --
+  // Initialize 'active' states with null or empty to signify "not filtered yet"
+  // BUT user wants default view: Top 50 by Rating.
+  // We can treat "empty filters" as "show default top 50" if distinct from "User searched for empty".
+  // Actually, simplest is:
+  // filteredShops = apply filters to allShops.
+  // If active filters are all empty => result is ALL shops.
+  // THEN, we slice filteredShops.
+  // User Rule 4: "Default show top 50. Unless user searches all/unlimited... then show 7097"
+  // Implementation:
+  // We have a flag `isDefaultView` which is true on load.
+  // If `isDefaultView` is true -> sort by rating desc, slice(0, 50).
+  // If `isDefaultView` is false -> show all filtered results.
+
+  const [activeSearch, setActiveSearch] = useState({
+    pref: "",
+    city: "",
+    category: "",
+    price: "",
+    term: "",
+    minRating: "",
+  });
+
+  const [isDefaultView, setIsDefaultView] = useState(true);
+
+  // Pagination & Sort
+  const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
-  const consoleRef = useRef<HTMLDivElement | null>(null);
-
-  const PAGE_SIZE = 20;
-
-  const totalPages = Math.max(1, Math.ceil(shops.length / PAGE_SIZE));
-  const paginatedShops = shops.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+  const [sortKey, setSortKey] = useState<keyof IShopExtended | "tabelogRating">(
+    "tabelogRating"
   );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const appendLog = (message: string) => {
-    setConsoleLines((prev) => [...prev, message]);
-  };
-
+  // Load Data
   useEffect(() => {
-    const el = consoleRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [consoleLines]);
+    async function loadData() {
+      try {
+        const res = await fetch("/api/shops");
+        if (!res.ok) {
+          if (res.status === 404)
+            throw new Error("尚未產生資料，請執行 npm run scrape:all");
+          throw new Error("無法讀取資料");
+        }
+        const data = await res.json();
+        setAllShops(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "載入失敗");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const handleRun = async () => {
-    setError(null);
-    setLoading(true);
-    setShops([]);
-    setCurrentPref(null);
-    setCurrentPage(1);
-    setConsoleLines([]);
+  // -- Options (Derived from all data) --
+  const { uniquePrefs, uniqueCities, uniqueCategories, uniquePrices } =
+    useMemo(() => {
+      const prefs = new Set<string>();
+      const cities = new Set<string>();
+      const cats = new Set<string>();
+      const prices = new Set<string>();
 
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pref }),
+      allShops.forEach((s) => {
+        if (s.prefecture) prefs.add(s.prefecture);
+        if (s.city) cities.add(s.city);
+        if (s.category) cats.add(s.category);
+        if (s.price) prices.add(s.price);
       });
 
-      if (!res.body) {
-        throw new Error("瀏覽器不支援串流回應");
+      // Helper to parse price string for sorting
+      // e.g. "￥1,000～￥1,999" -> 1000
+      // "～￥999" -> 0
+      const parsePrice = (p: string) => {
+        if (!p) return -1;
+        if (p.startsWith("～")) return 0;
+        const clean = p.replace(/[￥,]/g, "");
+        const match = clean.match(/(\d+)/);
+        return match ? parseInt(match[0], 10) : -1;
+      };
+
+      return {
+        uniquePrefs: Array.from(prefs).sort(),
+        uniqueCities: Array.from(cities).sort(),
+        uniqueCategories: Array.from(cats).sort(),
+        uniquePrices: Array.from(prices).sort(
+          (a, b) => parsePrice(a) - parsePrice(b)
+        ),
+      };
+    }, [allShops]);
+
+  // -- Filtering Logic (Using activeSearch) --
+  const filteredShops = useMemo(() => {
+    // If we are in default view, we just ignore filters here or assume they are empty.
+    // Technically, if isDefaultView is true, we act as if we are showing everything (candidates)
+    // but the sorting/slicing will happen next.
+    // However, to be cleaner:
+    // Filter first based on Active Search.
+
+    return allShops.filter((shop) => {
+      if (activeSearch.pref && shop.prefecture !== activeSearch.pref)
+        return false;
+      if (activeSearch.city && shop.city !== activeSearch.city) return false;
+      if (activeSearch.category && shop.category !== activeSearch.category)
+        return false;
+      if (activeSearch.price && !shop.price?.includes(activeSearch.price))
+        return false;
+      if (activeSearch.term && !shop.name.includes(activeSearch.term))
+        return false;
+
+      if (activeSearch.minRating) {
+        const r = parseFloat(shop.rating);
+        if (isNaN(r) || r < parseFloat(activeSearch.minRating)) return false;
+      }
+      return true;
+    });
+  }, [allShops, activeSearch]);
+
+  // -- Sorting & Slicing Logic --
+  const displayShops = useMemo(() => {
+    const final = [...filteredShops];
+
+    // Helper for sorting prices
+    const parsePrice = (p: string | undefined) => {
+      if (!p || p === "-") return -1;
+      if (p.startsWith("～")) return 0;
+      const clean = p.replace(/[￥,]/g, "");
+      const match = clean.match(/(\d+)/);
+      return match ? parseInt(match[0], 10) : -1;
+    };
+
+    // Sort
+    final.sort((a, b) => {
+      const key = sortKey === "tabelogRating" ? "rating" : sortKey;
+
+      // Price Sort
+      if (sortKey === "price") {
+        const valA = parsePrice(a.price);
+        const valB = parsePrice(b.price);
+        if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+        if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+        return 0;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      // Normal Sort
+      let valA: string | number | undefined = a[key as keyof IShopExtended];
+      let valB: string | number | undefined = b[key as keyof IShopExtended];
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          const line = buffer.slice(0, newlineIndex).trim();
-          buffer = buffer.slice(newlineIndex + 1);
-          if (!line) continue;
-
-          let event: StreamEvent | null = null;
-          try {
-            event = JSON.parse(line) as StreamEvent;
-          } catch {
-            continue;
-          }
-
-          if (event.type === "log") {
-            appendLog(event.message);
-          } else if (event.type === "result") {
-            setShops(event.shops);
-            setCurrentPref(event.pref);
-          } else if (event.type === "error") {
-            setError(event.message);
-            appendLog(`❌ [server] ${event.message}`);
-          }
-        }
+      if (sortKey === "rating" || sortKey === "tabelogRating") {
+        valA = parseFloat(a.rating || "0");
+        valB = parseFloat(b.rating || "0");
       }
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      appendLog(`❌ [client] ${errorMessage}`);
-      setError(errorMessage || "未知錯誤");
-    } finally {
-      setLoading(false);
+      if (valA === undefined) valA = "";
+      if (valB === undefined) valB = "";
+
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    // Special Rule: Default View -> Top 50 Only
+    if (isDefaultView) {
+      return final.slice(0, 50);
+    }
+
+    return final;
+  }, [filteredShops, sortKey, sortOrder, isDefaultView]);
+
+  // Pagination
+  const totalPages = Math.ceil(displayShops.length / pageSize);
+  const currentShops = displayShops.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // -- Handlers --
+  const handleSort = (key: keyof IShopExtended | "tabelogRating") => {
+    if (sortKey === key) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("desc");
     }
   };
 
+  const executeSearch = () => {
+    // 1. Commit inputs to active state
+    setActiveSearch({
+      pref: inputPref,
+      city: inputCity,
+      category: inputCategory,
+      price: inputPrice,
+      term: inputSearchTerm,
+      minRating: inputMinRating,
+    });
+    // 2. Disable default view (user explicitly searched)
+    setIsDefaultView(false);
+    // 3. Reset pagination
+    setCurrentPage(1);
+    // 4. Rule 5: Always sort by Name when searching
+    setSortKey("name");
+    setSortOrder("asc"); // Usually names A-Z is standard
+  };
+
   const handleClear = () => {
-    setShops([]);
-    setCurrentPref(null);
-    setError(null);
-    setConsoleLines([]);
+    // 1. Clear UI inputs
+    setInputPref("");
+    setInputCity("");
+    setInputCategory("");
+    setInputPrice("");
+    setInputSearchTerm("");
+    setInputMinRating("");
+
+    // 2. Clear Active Search
+    setActiveSearch({
+      pref: "",
+      city: "",
+      category: "",
+      price: "",
+      term: "",
+      minRating: "",
+    });
+
+    // 3. Return to Default View (Top 50)
+    setIsDefaultView(true);
+    setSortKey("tabelogRating");
+    setSortOrder("desc");
     setCurrentPage(1);
   };
 
-  const downloadUrl =
-    currentPref != null
-      ? `/api/download?pref=${encodeURIComponent(currentPref)}`
-      : null;
-
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-8">
+    <main className="container mx-auto max-w-7xl px-4 py-8">
       <div className="mb-6 flex items-center gap-4">
-        <Image src={icon} alt="Tabelog 百名店查詢器" width={128} height={80} />
-        <h1 className="text-3xl font-bold">Tabelog 百名店查詢器</h1>
+        <Image
+          src={icon}
+          alt="Tabelog 百名店"
+          width={128}
+          height={80}
+          className="rounded-lg shadow-sm"
+        />
+        <div>
+          <h1 className="text-3xl font-bold">Tabelog 百名店資料庫</h1>
+          <p className="text-base-content/70 text-sm">
+            收錄全日本約 7,000 間精選名店
+          </p>
+        </div>
       </div>
 
-      <div className="card bg-base-100 mb-8 shadow">
-        <div className="card-body space-y-4">
-          <h2 className="card-title">選擇都道府縣並執行</h2>
-          <p className="text-base-content/70 text-sm">
-            選好都道府縣後按下「查詢」，會呼叫 Playwright 在伺服端跑一次，
-            並同時產生 CSV 與下方表格結果。
-          </p>
+      {/* Control Panel */}
+      <div className="card bg-base-100 mb-8 shadow-md">
+        <div className="card-body">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Search Term - Full Width on Mobile, spans 2 cols on medium, 4 on large */}
+            <div className="form-control col-span-1 md:col-span-2 lg:col-span-4">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  店名關鍵字
+                </span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered input-primary mt-2 w-full focus:outline-offset-2"
+                value={inputSearchTerm}
+                onChange={(e) => setInputSearchTerm(e.target.value)}
+              />
+            </div>
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-end">
-            <label className="form-control w-full md:max-w-xs">
-              <div className="label">
-                <span className="label-text">都道府縣</span>
-              </div>
+            {/* Pref */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  都道府県
+                </span>
+              </label>
               <select
-                className="select select-bordered w-full"
-                value={pref}
-                onChange={(e) => setPref(e.target.value)}
-                disabled={loading}
-                suppressHydrationWarning={true}
+                className="select select-bordered select-primary mt-2 w-full"
+                value={inputPref}
+                onChange={(e) => setInputPref(e.target.value)}
               >
-                {PREF_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                <option value="">全部</option>
+                {uniquePrefs.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
                   </option>
                 ))}
               </select>
-            </label>
-
-            <button
-              className="btn btn-primary md:ml-4"
-              onClick={handleRun}
-              disabled={loading}
-            >
-              {loading ? "執行中..." : "查詢"}
-            </button>
-
-            <button
-              className="btn md:ml-2"
-              onClick={handleClear}
-              disabled={loading && shops.length === 0}
-            >
-              清除結果
-            </button>
-
-            {downloadUrl && (
-              <a href={downloadUrl} className="btn btn-outline md:ml-auto">
-                下載 CSV
-              </a>
-            )}
-          </div>
-
-          {error && (
-            <div className="alert alert-error mt-4">
-              <span>{error}</span>
             </div>
-          )}
+
+            {/* City */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  市町村区
+                </span>
+              </label>
+              <select
+                className="select select-bordered select-primary mt-2 w-full"
+                value={inputCity}
+                onChange={(e) => setInputCity(e.target.value)}
+                disabled={!inputPref}
+              >
+                <option value="">全部</option>
+                {uniqueCities
+                  .filter(
+                    (c) =>
+                      !inputPref ||
+                      allShops.some(
+                        (s) => s.prefecture === inputPref && s.city === c
+                      )
+                  )
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Category */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base font-semibold">類別</span>
+              </label>
+              <select
+                className="select select-bordered select-primary mt-2 w-full"
+                value={inputCategory}
+                onChange={(e) => setInputCategory(e.target.value)}
+              >
+                <option value="">全部</option>
+                {uniqueCategories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Price */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  價格區間
+                </span>
+              </label>
+              <select
+                className="select select-bordered select-primary mt-2 w-full"
+                value={inputPrice}
+                onChange={(e) => setInputPrice(e.target.value)}
+              >
+                <option value="">全部</option>
+                {uniquePrices.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Rating */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  最低評分
+                </span>
+              </label>
+              <select
+                className="select select-bordered select-primary mt-2 w-full"
+                value={inputMinRating}
+                onChange={(e) => setInputMinRating(e.target.value)}
+              >
+                <option value="">不限</option>
+                <option value="3.0">3.0+</option>
+                <option value="3.5">3.5+</option>
+                <option value="3.8">3.8+</option>
+                <option value="4.0">4.0+</option>
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-base-200 col-span-1 mt-6 flex justify-end gap-3 border-t pt-4 md:col-span-2 lg:col-span-4">
+              {!isDefaultView && (
+                <button
+                  className="btn btn-ghost text-error"
+                  onClick={handleClear}
+                >
+                  清除搜尋結果
+                </button>
+              )}
+              <button className="btn btn-primary px-8" onClick={executeSearch}>
+                搜尋
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="card bg-base-100 mb-8 shadow">
-        <div className="card-body space-y-4">
-          <h2 className="card-title mb-0">執行進度</h2>
-          <p className="text-base-content/70 mb-2 text-sm">
-            根據店家數量多寡與硬體設備、網路速度等因素，執行時間可能會有所不同，約會在
-            3-8 分鐘之間完成，請耐心等候。
-          </p>
-          <div className="mockup-window border-base-300 bg-base-300/40 border">
-            <div
-              ref={consoleRef}
-              className="bg-neutral text-neutral-content h-64 overflow-y-auto px-4 py-3 font-mono text-xs"
-            >
-              {consoleLines.length === 0 ? (
-                <span className="text-neutral-content/60">
-                  尚未開始執行，請先點擊上方「查詢」。
+      {/* Results */}
+      {loading ? (
+        <div className="py-20 text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-base-content/70 mt-4">讀取資料中...</p>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">
+          <span>{error}</span>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              {isDefaultView ? (
+                <span className="badge badge-lg badge-accent badge-outline font-normal">
+                  全日本精選 Top 50
                 </span>
               ) : (
-                consoleLines.map((line, idx) => (
-                  <div key={idx} className="whitespace-pre-wrap">
-                    {line}
-                  </div>
-                ))
+                <>搜尋結果: {displayShops.length} 筆</>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          {currentPref && (
-            <h2 className="card-title mb-4">
-              查詢結果：
-              {PREF_OPTIONS.find((p) => p.value === currentPref)?.label ||
-                currentPref}
-              共有 {shops.length} 間百名店
             </h2>
-          )}
 
-          {shops.length === 0 ? (
-            <p className="text-base-content/70 text-sm">
-              目前尚無結果，請先選擇都道府縣並查詢。
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="table-zebra table-sm table min-w-max">
-                <thead>
-                  <tr>
-                    <th className="whitespace-nowrap">店名</th>
-                    <th className="whitespace-nowrap">地址</th>
-                    <th className="whitespace-nowrap">類別</th>
-                    <th>URL</th>
-                    <th>評分</th>
-                    <th className="whitespace-nowrap">價格</th>
-                    <th>公休日</th>
-                    <th>營業時間</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedShops.map((shop, idx) => (
-                    <tr key={shop.url || idx}>
-                      <td className="whitespace-nowrap">{shop.name}</td>
-                      <td className="whitespace-nowrap">{shop.address}</td>
-                      <td className="whitespace-nowrap">{shop.category}</td>
-                      <td>
-                        <a
-                          href={shop.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="link link-primary"
-                        >
-                          開啟
-                        </a>
-                      </td>
-                      <td>{shop.rating}</td>
-                      <td className="whitespace-nowrap">{shop.price ?? "-"}</td>
-                      <td>{shop.closedDay ?? "-"}</td>
-                      <td>{shop.businessHour ?? "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <div className="text-base-content/70 text-sm">
-                  顯示第 {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
-                  {Math.min(currentPage * PAGE_SIZE, shops.length)} 筆，共{" "}
-                  {shops.length} 筆
-                </div>
-
-                <div className="join">
+            <div className="flex items-center gap-4">
+              {/* Top Pagination Control */}
+              {totalPages > 1 && (
+                <div className="join join-horizontal">
                   <button
-                    className="btn btn-sm join-item"
+                    className="join-item btn btn-xs btn-outline"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
-                    上一頁
+                    «
                   </button>
-                  <span className="btn btn-sm join-item pointer-events-none">
+                  <button className="join-item btn btn-xs btn-disabled border-base-300 text-base-content bg-transparent">
                     {currentPage} / {totalPages}
-                  </span>
+                  </button>
                   <button
-                    className="btn btn-sm join-item"
+                    className="join-item btn btn-xs btn-outline"
                     onClick={() =>
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages}
                   >
-                    下一頁
+                    »
                   </button>
                 </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium whitespace-nowrap">
+                  每頁顯示:
+                </span>
+                <select
+                  className="select select-sm select-bordered"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-base-100 border-base-200 overflow-x-auto rounded-lg border shadow">
+            <table className="table-zebra table w-full">
+              <thead className="bg-base-200/50">
+                <tr>
+                  <th className="w-16">圖片</th>
+                  <th
+                    className="hover:bg-base-300 min-w-[200px] cursor-pointer"
+                    onClick={() => handleSort("name")}
+                  >
+                    <div className="flex items-center gap-1">
+                      店名
+                      {sortKey === "name" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort("category")}
+                  >
+                    <div className="flex items-center gap-1">
+                      類別
+                      {sortKey === "category" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort("prefecture")}
+                  >
+                    <div className="flex items-center gap-1">
+                      都道府県
+                      {sortKey === "prefecture" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort("city")}
+                  >
+                    <div className="flex items-center gap-1">
+                      市町村区
+                      {sortKey === "city" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort("rating")}
+                  >
+                    <div className="flex items-center gap-1">
+                      評分
+                      {sortKey === "rating" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort("price")}
+                  >
+                    <div className="flex items-center gap-1">
+                      價格區間
+                      {sortKey === "price" && (
+                        <span className="text-xs">
+                          {sortOrder === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="whitespace-nowrap">公休日</th>
+                  <th>詳細資訊</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentShops.map((shop, idx) => (
+                  <tr key={shop.url + idx} className="hover">
+                    <td>
+                      {shop.thumbnailUrl ? (
+                        <div className="avatar">
+                          <div className="ring-base-300 relative h-12 w-12 rounded ring-1 ring-offset-1">
+                            <Image
+                              src={shop.thumbnailUrl}
+                              alt={shop.name}
+                              fill
+                              className="rounded object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-base-200 text-base-content/30 flex h-12 w-12 items-center justify-center rounded text-xs">
+                          無圖片
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className="text-base font-bold">{shop.name}</div>
+                      <div className="text-base-content/60 mt-0.5 text-xs">
+                        {shop.address}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge badge-ghost badge-sm whitespace-nowrap">
+                        {shop.category}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap">{shop.prefecture}</td>
+                    <td className="whitespace-nowrap">{shop.city}</td>
+                    <td>
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-500">★</span>
+                        <span className="font-mono text-lg font-bold">
+                          {shop.rating}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="font-mono text-xs whitespace-nowrap">
+                      {shop.price || "-"}
+                    </td>
+                    <td
+                      className="max-w-xs truncate text-xs"
+                      title={shop.closedDay}
+                    >
+                      {shop.closedDay || "-"}
+                    </td>
+                    <td>
+                      <a
+                        href={shop.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-xs btn-outline btn-primary"
+                      >
+                        Tabelog
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {displayShops.length === 0 && (
+              <div className="text-base-content/50 p-8 text-center">
+                沒有符合條件的店家
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 mb-8 flex justify-center">
+              <div className="join shadow-sm">
+                <button
+                  className="join-item btn btn-sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  «
+                </button>
+                <div className="join-item btn btn-sm no-animation bg-base-100 cursor-default">
+                  第 {currentPage} / {totalPages} 頁
+                </div>
+                <button
+                  className="join-item btn btn-sm"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  »
+                </button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      )}
     </main>
   );
 }
