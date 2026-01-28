@@ -231,10 +231,20 @@ export default function HomePage() {
           height={80}
           className="rounded-lg shadow-sm"
         />
-        <div>
+        <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Tabelog 百名店資料庫</h1>
           <p className="text-base-content/70 text-sm">
-            收錄全日本約 7,000 間精選名店
+            以日本知名食記網站
+            <a
+              href="https://award.tabelog.com/hyakumeiten"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              「食べログ 百名店」
+            </a>
+            為資料基礎，一次收錄全日本約 7,000
+            間百名店，並提供完整資料查詢與篩選功能。
           </p>
         </div>
       </div>
@@ -245,9 +255,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="form-control col-span-1 md:col-span-2 lg:col-span-4">
               <label className="label">
-                <span className="label-text text-base font-semibold">
-                  店名關鍵字
-                </span>
+                <span className="label-text text-base font-semibold">店名</span>
               </label>
               <input
                 type="text"
@@ -372,7 +380,7 @@ export default function HomePage() {
                   清除搜尋結果
                 </button>
               )}
-              <button className="btn btn-primary px-8" onClick={executeSearch}>
+              <button className="btn btn-info px-8" onClick={executeSearch}>
                 搜尋
               </button>
             </div>
@@ -591,7 +599,7 @@ export default function HomePage() {
                         href={shop.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn btn-xs btn-outline btn-primary"
+                        className="btn btn-xs btn-outline btn-secondary"
                       >
                         Tabelog
                       </a>

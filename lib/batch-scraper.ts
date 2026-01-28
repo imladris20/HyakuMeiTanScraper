@@ -6,7 +6,9 @@ import { CATEGORY_TRANSLATION_MAP } from "@/lib/constants";
 
 import type { ICategory, IShop } from "./types";
 
-const BASE_URL = "https://award.tabelog.com";
+export const BASE_URL = "https://award.tabelog.com";
+export const SHOP_IMAGE_PLACEHOLDER =
+  "https://play-lh.googleusercontent.com/j7DSy_97R-L-uOlNnRbkioAMzLCEE9BIFsG_25-t97Kxifk3B1K9uo6fpbT9VVnQ5w=w240-h480-rw";
 const CONCURRENCY_LIMIT = 5;
 const DATA_DIR = path.join(process.cwd(), "data");
 const OUTPUT_FILE = path.join(DATA_DIR, "shops.json");
@@ -133,11 +135,13 @@ export async function scrapeAllShops() {
           // User suggestion: check hyakumeiten-shop__img div
           // Fix: Check data-original first to avoid placeholder GIFs
           const imgEl = item.querySelector(".hyakumeiten-shop__img img");
-          let thumbUrl =
-            imgEl?.getAttribute("src") ||
-            "//play-lh.googleusercontent.com/j7DSy_97R-L-uOlNnRbkioAMzLCEE9BIFsG_25-t97Kxifk3B1K9uo6fpbT9VVnQ5w=w240-h480-rw";
+          let thumbUrl = imgEl?.getAttribute("data-src");
 
-          if (thumbUrl.startsWith("//")) {
+          if (thumbUrl && thumbUrl.endsWith(".gif")) {
+            thumbUrl = SHOP_IMAGE_PLACEHOLDER;
+          }
+
+          if (thumbUrl && thumbUrl.startsWith("//")) {
             thumbUrl = `https:${thumbUrl}`;
           }
 
@@ -147,8 +151,8 @@ export async function scrapeAllShops() {
               name: nameEl.textContent?.trim(),
               url: (anchorEl as HTMLAnchorElement).href,
               address: areaEl?.textContent?.trim() || "",
-              rating: 0, // Placeholder, fetch in detail
-              thumbnailUrl: thumbUrl,
+              rating: 0,
+              thumbnailUrl: thumbUrl ?? SHOP_IMAGE_PLACEHOLDER,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any); // Use any for internal evaluate result, cast later
           }
