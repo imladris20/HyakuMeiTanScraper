@@ -79,10 +79,12 @@ export async function scrapeHyakumeiten(
   const categoryList: ICategory[] = rawSlugs
     .filter((slug) => !["top", "history", "msg"].includes(slug))
     .map((fullSlug) => {
-      let lookupKey = fullSlug;
-      let baseSlug = fullSlug.replace(/_east$|_west$|_tokyo$/, "");
+      const lookupKey = fullSlug;
+      const baseSlug = fullSlug.replace(/_east$|_west$|_tokyo$/, "");
 
-      let finalKey = CATEGORY_TRANSLATION_MAP[lookupKey] ? lookupKey : baseSlug;
+      const finalKey = CATEGORY_TRANSLATION_MAP[lookupKey]
+        ? lookupKey
+        : baseSlug;
       const data = CATEGORY_TRANSLATION_MAP[finalKey];
 
       if (!data) {
@@ -158,11 +160,19 @@ export async function scrapeHyakumeiten(
         `^https://tabelog\\.com/${pref}/A\\d+/A\\d+/\\d+/?$`
       );
 
+      interface ShopResult {
+        category: string;
+        name: string;
+        url: string;
+        address: string;
+        rating: string;
+      }
+
       const shops = await page.evaluate(
         (args) => {
-          const { categoryName, shopUrlPatternStr, prefCode } = args;
+          const { categoryName, shopUrlPatternStr } = args;
           const shopUrlRe = new RegExp(shopUrlPatternStr);
-          const results: any[] = [];
+          const results: ShopResult[] = [];
 
           const items = document.querySelectorAll(
             ".hyakumeiten-shop__item, .hyakumeiten-shop-item"
@@ -215,7 +225,6 @@ export async function scrapeHyakumeiten(
         {
           categoryName: cat.traditionalChineseName,
           shopUrlPatternStr: shopUrlPattern.source,
-          prefCode: pref,
         }
       );
 
@@ -339,7 +348,7 @@ export async function scrapeHyakumeiten(
             closedDay = match[1] || "";
           } else {
             const days = ["月", "火", "水", "木", "金", "土", "日"];
-            const closedDays = days.filter((d) =>
+            const closedDays = days.filter(() =>
               businessHour.includes(`定休日`)
             );
             if (closedDays.length > 0) closedDay = "參見營業時間";
@@ -378,7 +387,7 @@ export async function scrapeHyakumeiten(
   const queue = [...uniqueShops];
   let completedCount = 0;
 
-  async function worker(id: number) {
+  async function worker() {
     while (queue.length > 0) {
       const shop = queue.shift();
       if (!shop) break;
@@ -391,9 +400,7 @@ export async function scrapeHyakumeiten(
     }
   }
 
-  const workers = Array.from({ length: CONCURRENCY_LIMIT }, (_, i) =>
-    worker(i + 1)
-  );
+  const workers = Array.from({ length: CONCURRENCY_LIMIT }, () => worker());
   await Promise.all(workers);
 
   await browser.close();

@@ -1,21 +1,29 @@
 {
   "name": "hyakumeitan-scraper",
   "module": "index.ts",
+  "packageManager": "bun@1.2.23",
   "scripts": {
     "dev": "next dev -p 2950",
     "build": "next build",
     "start": "next start",
-    "scrape:nagano": "tsx ./legacy/index.ts"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "scrape:nagano": "tsx ./legacy/index.ts",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^25.0.10",
     "daisyui": "^5.5.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.6",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
     "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.7.0"
+    "prettier-plugin-tailwindcss": "^0.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",

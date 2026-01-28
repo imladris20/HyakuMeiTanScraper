@@ -92,9 +92,10 @@ export default function HomePage() {
           }
         }
       }
-    } catch (e: any) {
-      appendLog(`❌ [client] ${e?.message ?? String(e)}`);
-      setError(e.message || "未知錯誤");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      appendLog(`❌ [client] ${errorMessage}`);
+      setError(errorMessage || "未知錯誤");
     } finally {
       setLoading(false);
     }
