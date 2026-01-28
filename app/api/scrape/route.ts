@@ -1,5 +1,6 @@
+
+import { scrapeHyakumeiten } from "@/lib/scraper";
 import type { IShop } from "../../../legacy/types";
-import { scrapeHyakumeiten } from "../../../lib/scraper";
 
 export const runtime = "nodejs";
 

@@ -3,9 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { type Browser, chromium } from "playwright";
 
-import { PREF_OPTIONS } from "../legacy/constants";
-import { CATEGORY_TRANSLATION_MAP } from "../legacy/map";
-import type { ICategory, IShop } from "../legacy/types";
+import { PREF_OPTIONS } from "@/legacy/constants";
+import { CATEGORY_TRANSLATION_MAP } from "@/legacy/map";
+import type { ICategory, IShop } from "@/legacy/types";
 
 const BASE_URL = "https://award.tabelog.com";
 const CONCURRENCY_LIMIT = 5;
