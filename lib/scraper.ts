@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { type Browser, chromium } from "playwright";
 
+import { PREF_OPTIONS } from "../legacy/constants";
 import { CATEGORY_TRANSLATION_MAP } from "../legacy/map";
 import type { ICategory, IShop } from "../legacy/types";
 
@@ -405,7 +406,9 @@ export async function scrapeHyakumeiten(
   await browser.close();
 
   log("\n6. 輸出 CSV");
-  log(`\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${pref} 的百名店。`);
+  log(
+    `\n📊 總結：共找到 ${uniqueShops.length} 間位於 ${PREF_OPTIONS.find((p) => p.value === pref)?.label || pref} 的百名店。`
+  );
 
   const outputDir = path.join(process.cwd(), "output");
   if (!fs.existsSync(outputDir)) {

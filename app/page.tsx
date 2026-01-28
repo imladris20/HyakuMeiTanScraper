@@ -18,7 +18,16 @@ export default function HomePage() {
   const [shops, setShops] = useState<IShop[]>([]);
   const [currentPref, setCurrentPref] = useState<string | null>(null);
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const consoleRef = useRef<HTMLDivElement | null>(null);
+
+  const PAGE_SIZE = 20;
+
+  const totalPages = Math.max(1, Math.ceil(shops.length / PAGE_SIZE));
+  const paginatedShops = shops.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   const appendLog = (message: string) => {
     setConsoleLines((prev) => [...prev, message]);
@@ -35,6 +44,7 @@ export default function HomePage() {
     setLoading(true);
     setShops([]);
     setCurrentPref(null);
+    setCurrentPage(1);
     setConsoleLines([]);
 
     try {
@@ -96,6 +106,7 @@ export default function HomePage() {
     setCurrentPref(null);
     setError(null);
     setConsoleLines([]);
+    setCurrentPage(1);
   };
 
   const downloadUrl =
@@ -199,14 +210,14 @@ export default function HomePage() {
 
       <div className="card bg-base-100 shadow">
         <div className="card-body">
-          <h2 className="card-title mb-4">
-            查詢結果
-            {currentPref && (
-              <span className="badge badge-outline ml-2">
-                Pref: {currentPref}
-              </span>
-            )}
-          </h2>
+          {currentPref && (
+            <h2 className="card-title mb-4">
+              查詢結果：
+              {PREF_OPTIONS.find((p) => p.value === currentPref)?.label ||
+                currentPref}
+              共有 {shops.length} 間百名店
+            </h2>
+          )}
 
           {shops.length === 0 ? (
             <p className="text-base-content/70 text-sm">
@@ -214,25 +225,25 @@ export default function HomePage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table-zebra table-sm table">
+              <table className="table-zebra table-sm table min-w-max">
                 <thead>
                   <tr>
-                    <th>店名</th>
-                    <th>地址</th>
-                    <th>類別</th>
+                    <th className="whitespace-nowrap">店名</th>
+                    <th className="whitespace-nowrap">地址</th>
+                    <th className="whitespace-nowrap">類別</th>
                     <th>URL</th>
                     <th>評分</th>
-                    <th>價格</th>
+                    <th className="whitespace-nowrap">價格</th>
                     <th>公休日</th>
                     <th>營業時間</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {shops.map((shop, idx) => (
+                  {paginatedShops.map((shop, idx) => (
                     <tr key={shop.url || idx}>
-                      <td>{shop.name}</td>
-                      <td>{shop.address}</td>
-                      <td>{shop.category}</td>
+                      <td className="whitespace-nowrap">{shop.name}</td>
+                      <td className="whitespace-nowrap">{shop.address}</td>
+                      <td className="whitespace-nowrap">{shop.category}</td>
                       <td>
                         <a
                           href={shop.url}
@@ -244,13 +255,43 @@ export default function HomePage() {
                         </a>
                       </td>
                       <td>{shop.rating}</td>
-                      <td>{shop.price ?? "-"}</td>
+                      <td className="whitespace-nowrap">{shop.price ?? "-"}</td>
                       <td>{shop.closedDay ?? "-"}</td>
                       <td>{shop.businessHour ?? "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="text-base-content/70 text-sm">
+                  顯示第 {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
+                  {Math.min(currentPage * PAGE_SIZE, shops.length)} 筆，共{" "}
+                  {shops.length} 筆
+                </div>
+
+                <div className="join">
+                  <button
+                    className="btn btn-sm join-item"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    上一頁
+                  </button>
+                  <span className="btn btn-sm join-item pointer-events-none">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    className="btn btn-sm join-item"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    下一頁
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
