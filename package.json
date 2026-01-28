@@ -1,7 +1,8 @@
 {
   "name": "hyakumeitan-scraper",
-  "module": "index.ts",
-  "packageManager": "bun@1.2.23",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "bun@1.3.7",
   "scripts": {
     "dev": "next dev -p 2950",
     "build": "next build",
@@ -12,7 +13,15 @@
     "scrape:all": "tsx ./lib/batch-scraper.ts",
     "prepare": "husky"
   },
+  "dependencies": {
+    "next": "^16.1.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
   "devDependencies": {
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
+    "@tailwindcss/postcss": "^4.1.18",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^25.0.10",
     "daisyui": "^5.5.14",
@@ -24,20 +33,18 @@
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/react": "^19.2.9",
-    "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.23",
+    "typescript": "^5.9.3",
     "csv-writer": "^1.6.0",
-    "next": "^16.1.5",
     "playwright": "^1.58.0",
-    "postcss": "^8.5.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwindcss": "^4.1.18",
-    "tsx": "^4.21.0"
-  }
+    "tsx": "^4.21.0",
+    "tailwindcss": "^4.1.18"
+  },
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
 }

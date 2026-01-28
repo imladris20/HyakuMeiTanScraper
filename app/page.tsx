@@ -497,7 +497,7 @@ export default function HomePage() {
                 <tr>
                   <th className="w-16">圖片</th>
                   <th
-                    className="hover:bg-base-300 min-w-[200px] cursor-pointer"
+                    className="hover:bg-base-300 min-w-50 cursor-pointer"
                     onClick={() => handleSort("name")}
                   >
                     <div className="flex items-center gap-1">
