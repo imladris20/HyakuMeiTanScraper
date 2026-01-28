@@ -614,11 +614,9 @@ export default function HomePage() {
                     <td className="whitespace-nowrap">{shop.prefecture}</td>
                     <td className="whitespace-nowrap">{shop.city}</td>
                     <td>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-baseline gap-1">
                         <span className="text-amber-500">★</span>
-                        <span className="font-mono text-lg font-bold">
-                          {shop.rating}
-                        </span>
+                        <span className="font-mono">{shop.rating}</span>
                       </div>
                     </td>
                     <td className="font-mono text-xs whitespace-nowrap">
