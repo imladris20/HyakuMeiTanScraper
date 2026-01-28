@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Tabelog 百名店查詢器",
-  description: "選擇都道府縣後即可查詢，等待完成後就可以下載 CSV 檔",
+  description:
+    "全日本 Tabelog 百名店探索工具，收錄約 7,000 間精選名店，支援地區、類別、價格與評分等多維度篩選，輕鬆發掘在地美食。",
 };
 
 export default function RootLayout({
