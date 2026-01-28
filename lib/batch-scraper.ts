@@ -142,13 +142,15 @@ export async function scrapeAllShops() {
           );
           // Extract Thumbnail
           // User suggestion: check hyakumeiten-shop__img div
+          // Fix: Check data-original first to avoid placeholder GIFs
           const imgEl = item.querySelector(
             ".hyakumeiten-shop__img img, .hyakumeiten-shop-item__img img"
           );
-          const thumbUrl =
-            imgEl?.getAttribute("src") ||
-            imgEl?.getAttribute("data-original") ||
-            "";
+          let thumbUrl = imgEl?.getAttribute("src") || "";
+
+          if (thumbUrl.startsWith("//")) {
+            thumbUrl = `https:${thumbUrl}`;
+          }
 
           if (nameEl && anchorEl) {
             results.push({
@@ -157,7 +159,7 @@ export async function scrapeAllShops() {
               url: (anchorEl as HTMLAnchorElement).href,
               address: areaEl?.textContent?.trim() || "",
               rating: 0, // Placeholder, fetch in detail
-              thumbnailUrl: `https:${thumbUrl}`,
+              thumbnailUrl: thumbUrl,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any); // Use any for internal evaluate result, cast later
           }

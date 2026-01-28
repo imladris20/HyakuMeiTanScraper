@@ -3,7 +3,8 @@ import { chromium } from "playwright";
 import type { IShopExtended } from "./types";
 
 // Test URL: Sushi Tokyo (First shop usually)
-const TEST_CATEGORY_URL = "https://award.tabelog.com/hyakumeiten/sushi_tokyo";
+const TEST_CATEGORY_URL =
+  "https://award.tabelog.com/hyakumeiten/ramen_hokkaido";
 
 async function testScraper() {
   console.log("🧪 Starting Test Scraper...");
@@ -35,8 +36,7 @@ async function testScraper() {
     const imgEl = item.querySelector(
       ".hyakumeiten-shop__img img, .hyakumeiten-shop-item__img img"
     );
-    const thumbUrl =
-      imgEl?.getAttribute("src") || imgEl?.getAttribute("data-original") || "";
+    const thumbUrl = imgEl?.getAttribute("src") || "沒抓到";
 
     if (nameEl && anchorEl) {
       return {
