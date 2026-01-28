@@ -137,8 +137,8 @@ export default function HomePage() {
         return false;
 
       if (activeSearch.minRating) {
-        const r = parseFloat(shop.rating);
-        if (isNaN(r) || r < parseFloat(activeSearch.minRating)) return false;
+        const r = shop.rating; // It's a number now
+        if (r < parseFloat(activeSearch.minRating)) return false;
       }
       return true;
     });
@@ -175,8 +175,8 @@ export default function HomePage() {
       let valB: string | number | undefined = b[key as keyof IShopExtended];
 
       if (sortKey === "rating" || sortKey === "tabelogRating") {
-        valA = parseFloat(a.rating || "0");
-        valB = parseFloat(b.rating || "0");
+        valA = a.rating; // It's a number
+        valB = b.rating; // It's a number
       }
       if (valA === undefined) valA = "";
       if (valB === undefined) valB = "";

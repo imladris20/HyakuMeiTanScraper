@@ -140,12 +140,10 @@ export async function scrapeAllShops() {
           const areaEl = item.querySelector(
             ".hyakumeiten-shop__area, .hyakumeiten-shop-item__area"
           );
-          const ratingEl = item.querySelector(
-            ".hyakumeiten-shop__rating, .hyakumeiten-shop-item__rating"
-          );
           // Extract Thumbnail
+          // User suggestion: check hyakumeiten-shop__img div
           const imgEl = item.querySelector(
-            ".hyakumeiten-shop__target-img, .hyakumeiten-shop-item__target-img, .hyakumeiten-shop-item__img img"
+            ".hyakumeiten-shop__img img, .hyakumeiten-shop-item__img img"
           );
           const thumbUrl =
             imgEl?.getAttribute("src") ||
@@ -158,8 +156,8 @@ export async function scrapeAllShops() {
               name: nameEl.textContent?.trim(),
               url: (anchorEl as HTMLAnchorElement).href,
               address: areaEl?.textContent?.trim() || "",
-              rating: ratingEl?.textContent?.trim() || "",
-              thumbnailUrl: thumbUrl,
+              rating: 0, // Placeholder, fetch in detail
+              thumbnailUrl: `https:${thumbUrl}`,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any); // Use any for internal evaluate result, cast later
           }
@@ -175,8 +173,7 @@ export async function scrapeAllShops() {
             name: s.name,
             category: s.category, // First category found
             url: s.url,
-            tabelogUrl: s.url,
-            rating: s.rating,
+            rating: 0,
             address: s.address, // Placeholder, will update
             thumbnailUrl: s.thumbnailUrl,
             price: "",
@@ -184,6 +181,8 @@ export async function scrapeAllShops() {
             businessHour: "",
             prefecture: "", // To be filled
             city: "", // To be filled
+            googleMapUrl: "",
+            googleMapRating: 0,
           });
         }
       }
@@ -260,6 +259,12 @@ export async function scrapeAllShops() {
           else if (price.includes("￥")) price = price.replace(/￥/g, "¥");
         }
 
+        // Extract Rating (Detail Page)
+        const ratingEl = document.querySelector(
+          ".rdheader-rating__score-val-dtl"
+        );
+        const ratingVal = ratingEl?.textContent?.trim() || "0";
+
         // Fallback for Closed Day from Business Hour
         if (!closedDay && businessHour.includes("定休日")) {
           const match = businessHour.match(/定休日[:：]?\s*([^\n]+)/);
@@ -270,13 +275,16 @@ export async function scrapeAllShops() {
         if (businessHour)
           businessHour = businessHour.replace(/\s+/g, " ").trim();
 
-        return { fullAddress, price, closedDay, businessHour };
+        return { fullAddress, price, closedDay, businessHour, ratingVal };
       });
 
       shop.address = details.fullAddress || shop.address;
       shop.price = details.price;
       shop.closedDay = details.closedDay;
-      shop.businessHour = details.businessHour; // Needed? Not in strict requirements list but good to have
+      shop.businessHour = details.businessHour;
+
+      const r = parseFloat(details.ratingVal);
+      shop.rating = isNaN(r) ? 0 : r;
 
       // Parse City/Pref
       const location = parseAddress(shop.address);
