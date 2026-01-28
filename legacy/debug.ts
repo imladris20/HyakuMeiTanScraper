@@ -38,7 +38,12 @@ const TARGET_URL =
         ".rstlist-info-table__item", // 表格列表
       ];
 
-      const report: any = {};
+      interface SelectorReport {
+        count: number;
+        firstItemHTML: string;
+      }
+
+      const report: Record<string, SelectorReport> = {};
 
       selectors.forEach((sel) => {
         const elements = document.querySelectorAll(sel);
@@ -70,7 +75,7 @@ const TARGET_URL =
     console.log("🔗 頁面上前 5 個連結文字:", debugInfo.sampleLinks);
     console.log("--------------------------\n");
 
-    if (Object.values(debugInfo.selectorReport).some((r: any) => r.count > 0)) {
+    if (Object.values(debugInfo.selectorReport).some((r) => r.count > 0)) {
       console.log("✅ 測試成功：有抓到某些元素，我們可以修正 index.ts 了。");
     } else {
       console.log("❌ 測試失敗：所有已知的選擇器都抓不到東西。");
