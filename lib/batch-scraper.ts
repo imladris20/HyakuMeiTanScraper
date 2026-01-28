@@ -114,10 +114,7 @@ export async function scrapeAllShops() {
 
       try {
         await Promise.race([
-          page.waitForSelector(
-            ".hyakumeiten-shop__item, .hyakumeiten-shop-item",
-            { timeout: 3000 }
-          ),
+          page.waitForSelector(".hyakumeiten-shop__item", { timeout: 3000 }),
           page.getByText("該当する店舗はありません").waitFor({ timeout: 3000 }),
         ]);
       } catch {}
@@ -126,27 +123,19 @@ export async function scrapeAllShops() {
       const shops = await page.evaluate((categoryName) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const results: any[] = [];
-        const items = document.querySelectorAll(
-          ".hyakumeiten-shop__item, .hyakumeiten-shop-item"
-        );
+        const items = document.querySelectorAll(".hyakumeiten-shop__item");
 
         items.forEach((item) => {
-          const nameEl = item.querySelector(
-            ".hyakumeiten-shop__name, .hyakumeiten-shop-item__name"
-          );
-          const anchorEl = item.querySelector(
-            "a.hyakumeiten-shop__target, a.hyakumeiten-shop-item__target"
-          );
-          const areaEl = item.querySelector(
-            ".hyakumeiten-shop__area, .hyakumeiten-shop-item__area"
-          );
+          const nameEl = item.querySelector(".hyakumeiten-shop__name");
+          const anchorEl = item.querySelector("a.hyakumeiten-shop__target");
+          const areaEl = item.querySelector(".hyakumeiten-shop__area");
           // Extract Thumbnail
           // User suggestion: check hyakumeiten-shop__img div
           // Fix: Check data-original first to avoid placeholder GIFs
-          const imgEl = item.querySelector(
-            ".hyakumeiten-shop__img img, .hyakumeiten-shop-item__img img"
-          );
-          let thumbUrl = imgEl?.getAttribute("src") || "";
+          const imgEl = item.querySelector(".hyakumeiten-shop__img img");
+          let thumbUrl =
+            imgEl?.getAttribute("src") ||
+            "//play-lh.googleusercontent.com/j7DSy_97R-L-uOlNnRbkioAMzLCEE9BIFsG_25-t97Kxifk3B1K9uo6fpbT9VVnQ5w=w240-h480-rw";
 
           if (thumbUrl.startsWith("//")) {
             thumbUrl = `https:${thumbUrl}`;
@@ -212,23 +201,9 @@ export async function scrapeAllShops() {
       const details = await p.evaluate(() => {
         // Full Address
         let fullAddress = "";
-        const addrEl =
-          document.querySelector(".rstinfo-table__address") ||
-          document.querySelector(".rstinfo-table__address-note");
-        if (addrEl)
+        const addrEl = document.querySelector(".rstinfo-table__address");
+        if (addrEl) {
           fullAddress = addrEl.textContent?.trim().replace(/\s+/g, " ") || "";
-        else {
-          // Fallback table search
-          const rows = Array.from(
-            document.querySelectorAll(".rstinfo-table tr")
-          );
-          const r = rows.find((x) =>
-            x.querySelector("th")?.textContent?.includes("住所")
-          );
-          if (r)
-            fullAddress =
-              r.querySelector("td")?.textContent?.trim().replace(/\s+/g, " ") ||
-              "";
         }
 
         let price = "";
@@ -242,10 +217,9 @@ export async function scrapeAllShops() {
           const txt = cell?.textContent?.trim() || "";
 
           if (header.includes("予算")) {
-            const priceEl =
-              cell?.querySelector(
-                ".rstinfo-table__budget-val, .c-rating__val"
-              ) || cell?.querySelector("em");
+            const priceEl = cell?.querySelector(
+              ".rstinfo-table__budget-item em"
+            );
             price = priceEl
               ? priceEl.textContent?.trim() || ""
               : txt.split("\n")[0]?.trim() || "";
