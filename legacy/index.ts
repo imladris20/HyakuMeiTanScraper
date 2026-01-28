@@ -1,4 +1,4 @@
-import { scrapeHyakumeiten } from "../lib/scraper";
+import { scrapeHyakumeiten } from "@/lib/scraper";
 
 async function main() {
   const pref = process.argv[2] || "nagano";

@@ -1,4 +1,4 @@
-import { scrapeHyakumeiten } from "../../../lib/scraper";
+import { scrapeHyakumeiten } from "@/lib/scraper";
 
 export const runtime = "nodejs";
 
