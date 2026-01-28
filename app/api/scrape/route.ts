@@ -1,15 +1,20 @@
+import type { IShop } from "../../../legacy/types";
 import { scrapeHyakumeiten } from "../../../lib/scraper";
 
 export const runtime = "nodejs";
 
 type StreamEvent =
   | { type: "log"; message: string }
-  | { type: "result"; pref: string; shops: any[] }
+  | { type: "result"; pref: string; shops: IShop[] }
   | { type: "error"; message: string };
 
+interface RequestBody {
+  pref?: string;
+}
+
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const pref: string | undefined = (body as any)?.pref;
+  const body = (await request.json().catch(() => ({}))) as RequestBody;
+  const pref: string | undefined = body?.pref;
 
   const encoder = new TextEncoder();
 
@@ -32,11 +37,13 @@ export async function POST(request: Request) {
         });
 
         send({ type: "result", pref, shops });
-      } catch (e: any) {
+      } catch (e) {
         console.error("[api/scrape] error:", e);
+        const errorMessage =
+          e instanceof Error ? e.message : "伺服端爬蟲發生錯誤";
         send({
           type: "error",
-          message: e?.message || "伺服端爬蟲發生錯誤",
+          message: errorMessage,
         });
       } finally {
         controller.close();
