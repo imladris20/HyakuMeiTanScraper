@@ -1,10 +1,10 @@
 import { chromium } from "playwright";
 
+import { BASE_URL, SHOP_IMAGE_PLACEHOLDER } from "./batch-scraper";
 import type { IShop } from "./types";
 
 // Test URL: Sushi Tokyo (First shop usually)
-const TEST_CATEGORY_URL =
-  "https://award.tabelog.com/hyakumeiten/ramen_hokkaido";
+const TEST_CATEGORY_URL = `${BASE_URL}/hyakumeiten/ramen_hokkaido`;
 
 async function testScraper() {
   console.log("🧪 Starting Test Scraper...");
@@ -17,33 +17,32 @@ async function testScraper() {
   // 1. Scrape List Item (Thumbnail Check)
   console.log("2. Extracting first shop from list...");
   const shopData = await page.evaluate(() => {
-    const item = document.querySelector(
-      ".hyakumeiten-shop__item, .hyakumeiten-shop-item"
-    );
+    const item = document.querySelector(".hyakumeiten-shop__item");
     if (!item) return null;
 
-    const nameEl = item.querySelector(
-      ".hyakumeiten-shop__name, .hyakumeiten-shop-item__name"
-    );
-    const anchorEl = item.querySelector(
-      "a.hyakumeiten-shop__target, a.hyakumeiten-shop-item__target"
-    );
-    const areaEl = item.querySelector(
-      ".hyakumeiten-shop__area, .hyakumeiten-shop-item__area"
-    );
+    const nameEl = item.querySelector(".hyakumeiten-shop__name");
+    const anchorEl = item.querySelector("a.hyakumeiten-shop__target");
+    const areaEl = item.querySelector(".hyakumeiten-shop__area");
 
     // Thumbnail Selector Check
-    const imgEl = item.querySelector(
-      ".hyakumeiten-shop__img img, .hyakumeiten-shop-item__img img"
-    );
-    const thumbUrl = imgEl?.getAttribute("src") || "沒抓到";
+    const imgEl = item.querySelector(".hyakumeiten-shop__img img");
+    let thumbUrl = imgEl?.getAttribute("data-src");
+
+    if (thumbUrl && thumbUrl.endsWith(".gif")) {
+      console.log("抓到官方暫時用的 placeholder");
+      thumbUrl = SHOP_IMAGE_PLACEHOLDER;
+    }
+
+    if (thumbUrl && thumbUrl.startsWith("//")) {
+      thumbUrl = `https:${thumbUrl}`;
+    }
 
     if (nameEl && anchorEl) {
       return {
         name: nameEl.textContent?.trim(),
         url: (anchorEl as HTMLAnchorElement).href,
         address: areaEl?.textContent?.trim() || "",
-        thumbnailUrl: `https:${thumbUrl}`,
+        thumbnailUrl: thumbUrl ?? SHOP_IMAGE_PLACEHOLDER,
       };
     }
     return null;

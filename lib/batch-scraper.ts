@@ -6,8 +6,8 @@ import { CATEGORY_TRANSLATION_MAP } from "@/lib/constants";
 
 import type { ICategory, IShop } from "./types";
 
-const BASE_URL = "https://award.tabelog.com";
-const SHOP_IMAGE_PLACEHOLDER =
+export const BASE_URL = "https://award.tabelog.com";
+export const SHOP_IMAGE_PLACEHOLDER =
   "https://play-lh.googleusercontent.com/j7DSy_97R-L-uOlNnRbkioAMzLCEE9BIFsG_25-t97Kxifk3B1K9uo6fpbT9VVnQ5w=w240-h480-rw";
 const CONCURRENCY_LIMIT = 5;
 const DATA_DIR = path.join(process.cwd(), "data");
