@@ -3,15 +3,8 @@ import * as path from "path";
 import { type Browser, chromium } from "playwright";
 
 import { CATEGORY_TRANSLATION_MAP } from "../legacy/map";
-import type { ICategory, IShop } from "../legacy/types";
-
-// Extended Interface for the new requirements
-export interface IShopExtended extends IShop {
-  prefecture: string;
-  city: string;
-  thumbnailUrl?: string; // New field
-  tabelogUrl: string; // Renamed for clarity, map to url of IShop
-}
+import type { ICategory } from "../legacy/types";
+import type { IShopExtended } from "./types";
 
 const BASE_URL = "https://award.tabelog.com";
 const CONCURRENCY_LIMIT = 5;

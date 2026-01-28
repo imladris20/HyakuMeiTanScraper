@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import type { IShopExtended } from "../lib/batch-scraper";
+import type { IShopExtended } from "../lib/types";
 import icon from "./assets/icon.png";
 
 // Define a type for our loaded data to avoid import errors if file doesn't exist yet
