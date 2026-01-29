@@ -461,10 +461,10 @@ export default function HomePage() {
             <table className="table-zebra table w-full">
               <thead className="bg-base-200/50">
                 <tr>
-                  <th className="w-16">圖片</th>
                   <th
                     className="hover:bg-base-300 min-w-50 cursor-pointer"
                     onClick={() => handleSort("name")}
+                    colSpan={2}
                   >
                     <div className="flex items-center gap-1">
                       店名
@@ -567,8 +567,10 @@ export default function HomePage() {
                       )}
                     </td>
                     <td>
-                      <div className="text-base font-bold">{shop.name}</div>
-                      <div className="text-base-content/60 mt-0.5 text-xs">
+                      <div className="max-w-40 truncate text-base font-bold">
+                        {shop.name}
+                      </div>
+                      <div className="text-base-content/60 mt-0.5 max-w-40 text-xs">
                         {shop.address}
                       </div>
                     </td>
@@ -589,7 +591,7 @@ export default function HomePage() {
                       {shop.price || "-"}
                     </td>
                     <td
-                      className="max-w-xs truncate text-xs"
+                      className="max-w-48 truncate text-xs"
                       title={shop.closedDay}
                     >
                       {shop.closedDay || "-"}
