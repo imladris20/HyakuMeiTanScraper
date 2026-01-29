@@ -223,7 +223,7 @@ export default function HomePage() {
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex flex-col items-center gap-4 md:flex-row">
         <Image
           src={icon}
           alt="Tabelog 百名店"
@@ -403,8 +403,8 @@ export default function HomePage() {
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <h2 className="flex items-center gap-2 text-xl font-bold">
               {isDefaultView ? (
-                <span className="badge badge-lg badge-accent badge-outline font-normal">
-                  全日本精選 Top 50
+                <span className="badge badge-lg badge-outline border-amber-400 font-normal text-amber-400">
+                  精選 Top 50
                 </span>
               ) : (
                 <>搜尋結果: {displayShops.length} 筆</>
