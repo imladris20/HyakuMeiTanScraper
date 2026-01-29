@@ -541,7 +541,6 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th className="whitespace-nowrap">公休日</th>
-                  <th>詳細資訊</th>
                 </tr>
               </thead>
               <tbody>
@@ -567,10 +566,17 @@ export default function HomePage() {
                       )}
                     </td>
                     <td>
-                      <div className="max-w-40 truncate text-base font-bold">
-                        {shop.name}
+                      <div className="max-w-48 truncate text-base font-bold">
+                        <a
+                          href={shop.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:text-primary hover:underline"
+                        >
+                          {shop.name}
+                        </a>
                       </div>
-                      <div className="text-base-content/60 mt-0.5 max-w-40 text-xs">
+                      <div className="text-base-content/60 mt-0.5 max-w-48 text-xs">
                         {shop.address}
                       </div>
                     </td>
@@ -591,20 +597,10 @@ export default function HomePage() {
                       {shop.price || "-"}
                     </td>
                     <td
-                      className="max-w-48 truncate text-xs"
+                      className="max-w-60 truncate text-xs"
                       title={shop.closedDay}
                     >
                       {shop.closedDay || "-"}
-                    </td>
-                    <td>
-                      <a
-                        href={shop.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-xs btn-outline btn-secondary"
-                      >
-                        Tabelog
-                      </a>
                     </td>
                   </tr>
                 ))}
