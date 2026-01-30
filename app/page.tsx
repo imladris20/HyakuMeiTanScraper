@@ -22,6 +22,7 @@ export default function HomePage() {
   // Location Input State
   const [inputLocation, setInputLocation] = useState("");
   const locationInputRef = useRef<HTMLInputElement>(null);
+  const resultsHeaderRef = useRef<HTMLHeadingElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const autocompleteRef = useRef<any>(null);
 
@@ -71,6 +72,17 @@ export default function HomePage() {
     }
     loadData();
   }, []);
+
+  // Auto-scroll to results
+  useEffect(() => {
+    // Only scroll if we are not in default view (meaning a search happened) and loading is done
+    if (!isDefaultView && !isLoading) {
+      resultsHeaderRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [isDefaultView, isLoading, activeSearch]);
 
   // Initialize Google Autocomplete
   useEffect(() => {
@@ -725,7 +737,10 @@ export default function HomePage() {
       ) : (
         <div className="space-y-4">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <h2 className="flex items-center gap-2 text-xl font-bold">
+            <h2
+              ref={resultsHeaderRef}
+              className="flex items-center gap-2 text-xl font-bold"
+            >
               {isDefaultView ? (
                 <span className="badge badge-lg badge-outline border-amber-400 font-normal text-amber-400">
                   精選 Top 50
