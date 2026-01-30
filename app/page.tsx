@@ -502,7 +502,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1 md:flex-row">
             <h1 className="text-2xl font-bold min-[360px]:text-3xl">
-              HyakuMeiTanHub
+              HyakuMeiTenHub
             </h1>
             <h1 className="text-2xl font-bold min-[360px]:text-3xl">
               食べログ 百名店查詢器

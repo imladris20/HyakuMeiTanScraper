@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "hyakumeitan-scraper",
+      "name": "hyakumeiten-hub",
       "dependencies": {
         "next": "^16.1.5",
         "react": "^19.2.4",
