@@ -522,7 +522,7 @@ export default function HomePage() {
             <div className="form-control md:col-span-9">
               <div className="label">
                 <p className="label-text text-sm font-semibold text-wrap md:text-base">
-                  輸入地點以查看附近或點選按鈕帶入目前位置
+                  輸入地點以查看附近或按按鈕帶入目前位置
                 </p>
                 <button
                   className="btn btn-square btn-outline btn-sm btn-primary shrink-0 items-center justify-center"
