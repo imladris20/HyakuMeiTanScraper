@@ -18,4 +18,6 @@ export interface IShop {
   thumbnailUrl: string;
   googleMapUrl?: string;
   googleMapRating?: number;
+  lat?: number;
+  lng?: number;
 }
