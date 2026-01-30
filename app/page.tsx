@@ -499,18 +499,11 @@ export default function HomePage() {
           className="rounded-lg shadow-sm"
         />
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Tabelog 百名店資料庫</h1>
-          <p className="text-base-content/70 text-sm">
-            以日本知名食記網站
-            <a
-              href="https://award.tabelog.com/hyakumeiten"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              「食べログ 百名店」
-            </a>
-            為資料基礎，提供位置搜尋與完整篩選功能。
+          <h1 className="text-3xl font-bold">
+            HyakuMeiTanHub 食べログ 百名店查詢器
+          </h1>
+          <p className="text-base-content/70 text-base">
+            搜尋餐廳從未如此輕鬆！
           </p>
         </div>
       </div>
@@ -533,7 +526,7 @@ export default function HomePage() {
               >
                 📍
               </button>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-1 flex gap-2">
                 <input
                   ref={locationInputRef}
                   type="text"
@@ -674,7 +667,22 @@ export default function HomePage() {
               </select>
             </div>
 
-            <div className="border-base-200 col-span-1 mt-6 flex justify-end gap-3 border-t pt-4 md:col-span-2 lg:col-span-4">
+            <div className="col-span-1 mt-2 md:col-span-2 lg:col-span-4">
+              <p className="text-base-content/70 text-sm">
+                以日本知名食記網站
+                <a
+                  href="https://award.tabelog.com/hyakumeiten"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  「食べログ 百名店」
+                </a>
+                為資料基礎，提供位置搜尋與完整篩選功能。
+              </p>
+            </div>
+
+            <div className="border-base-200 col-span-1 flex justify-end gap-3 border-t pt-4 md:col-span-2 lg:col-span-4">
               {!isDefaultView && (
                 <button
                   className="btn btn-ghost text-error"
