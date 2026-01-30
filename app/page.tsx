@@ -499,9 +499,10 @@ export default function HomePage() {
           className="rounded-lg shadow-sm"
         />
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">
-            HyakuMeiTanHub 食べログ 百名店查詢器
-          </h1>
+          <div className="flex flex-col gap-1 md:flex-row">
+            <h1 className="text-3xl font-bold">HyakuMeiTanHub</h1>
+            <h1 className="text-3xl font-bold">食べログ 百名店查詢器</h1>
+          </div>
           <p className="text-base-content/70 text-base">
             搜尋餐廳從未如此輕鬆！
           </p>
