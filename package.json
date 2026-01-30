@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "scrape:all": "tsx ./lib/batch-scraper.ts",
+    "geocode": "bun ./lib/geocode-shops.ts",
     "prepare": "husky",
     "kill-port": "kill -9 $(lsof -t -i:2950) 2>/dev/null || true",
     "dev": "bun run kill-port && next dev --turbopack -p 2950 & sleep 3 && open http://localhost:2950"

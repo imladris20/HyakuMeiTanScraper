@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { IShop } from "../lib/types";
 import icon from "./assets/icon.png";
 
@@ -18,6 +18,12 @@ export default function HomePage() {
   const [inputSearchTerm, setInputSearchTerm] = useState("");
   const [inputMinRating, setInputMinRating] = useState("");
 
+  // Location Input State
+  const [inputLocation, setInputLocation] = useState("");
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autocompleteRef = useRef<any>(null);
+
   const [activeSearch, setActiveSearch] = useState({
     pref: "",
     city: "",
@@ -25,14 +31,23 @@ export default function HomePage() {
     price: "",
     term: "",
     minRating: "",
+    // Location Search State
+    location: null as { lat: number; lng: number; address: string } | null,
   });
+
+  // Pending Location for Autocomplete/My Location before search execution
+  const [pendingLocation, setPendingLocation] = useState<{
+    lat: number;
+    lng: number;
+    address: string;
+  } | null>(null);
 
   const [isDefaultView, setIsDefaultView] = useState(true);
 
   // Pagination & Sort
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortKey, setSortKey] = useState<keyof IShop>("rating");
+  const [sortKey, setSortKey] = useState<keyof IShop | "distance">("rating");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Load Data
@@ -54,6 +69,37 @@ export default function HomePage() {
       }
     }
     loadData();
+  }, []);
+
+  // Initialize Google Autocomplete
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!locationInputRef.current || !(window as any).google) return;
+
+    if (!autocompleteRef.current) {
+      autocompleteRef.current =
+        new // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).google.maps.places.Autocomplete(
+          locationInputRef.current,
+          {
+            types: ["geocode", "establishment"],
+            componentRestrictions: { country: "jp" }, // Restrict prediction to Japan
+            fields: ["geometry", "formatted_address"],
+          }
+        );
+
+      autocompleteRef.current.addListener("place_changed", () => {
+        const place = autocompleteRef.current?.getPlace();
+        if (place && place.geometry && place.geometry.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          const address = place.formatted_address || place.name || "";
+
+          setInputLocation(address);
+          setPendingLocation({ lat, lng, address });
+        }
+      });
+    }
   }, []);
 
   // -- Options (Derived from all data) --
@@ -89,9 +135,53 @@ export default function HomePage() {
       };
     }, [allShops]);
 
+  // -- Distance Calculation Support --
+  const calculateDistance = (
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ) => {
+    const R = 6371; // km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   // -- Filtering Logic (Using activeSearch) --
   const filteredShops = useMemo(() => {
     return allShops.filter((shop) => {
+      // 1. Location Logic: If location is active, strictly filter by distance availability?
+      // Actually, we just need to ensure we can calc distance.
+      // But the requirement says "Disable Pref/City/Name" if location is active.
+      // So we IGNORE Pref/City/Name filters if activeSearch.location is present.
+
+      if (activeSearch.location) {
+        // Only apply Category (if set), Price (if set), Term is disabled logic-wise per requirement,
+        // but technically "Name" input is disabled in UI.
+        // Also Rating.
+
+        if (activeSearch.category && shop.category !== activeSearch.category)
+          return false;
+        if (activeSearch.price && !shop.price?.includes(activeSearch.price))
+          return false;
+        if (activeSearch.minRating) {
+          const r = shop.rating;
+          if (r < parseFloat(activeSearch.minRating)) return false;
+        }
+
+        // We do NOT filter by Pref/City/Term when Location is active.
+        return true;
+      }
+
+      // Normal Logic
       if (activeSearch.pref && shop.prefecture !== activeSearch.pref)
         return false;
       if (activeSearch.city && shop.city !== activeSearch.city) return false;
@@ -112,7 +202,9 @@ export default function HomePage() {
 
   // -- Sorting & Slicing Logic --
   const displayShops = useMemo(() => {
-    const final = [...filteredShops];
+    // If Location is active, calculate distances and attach to objects for sorting
+    // We create a shallow copy with distance if needed
+    let final: (IShop & { distance?: number })[] = [...filteredShops];
 
     const parsePrice = (p: string | undefined) => {
       if (!p || p === "-") return -1;
@@ -122,9 +214,37 @@ export default function HomePage() {
       return match ? parseInt(match[0], 10) : -1;
     };
 
-    // Sort
+    if (activeSearch.location) {
+      // Calculate all distances
+      final = final.map((shop) => {
+        let dist = 99999;
+        if (shop.lat && shop.lng && activeSearch.location) {
+          dist = calculateDistance(
+            activeSearch.location.lat,
+            activeSearch.location.lng,
+            shop.lat,
+            shop.lng
+          );
+        }
+        return { ...shop, distance: dist };
+      });
+
+      // Always sort by distance ASC if Location is active
+      // Requirement: "Give closest 50"
+      final.sort((a, b) => (a.distance || 99999) - (b.distance || 99999));
+
+      // Only top 50
+      return final.slice(0, 50);
+    }
+
+    // Normal Sort
     final.sort((a, b) => {
       const key = sortKey;
+
+      if (key === "distance") {
+        // Should not happen in normal mode, but fallback
+        return 0;
+      }
 
       // Price Sort
       if (sortKey === "price") {
@@ -157,7 +277,7 @@ export default function HomePage() {
     }
 
     return final;
-  }, [filteredShops, sortKey, sortOrder, isDefaultView]);
+  }, [filteredShops, sortKey, sortOrder, isDefaultView, activeSearch.location]);
 
   // Pagination
   const totalPages = Math.ceil(displayShops.length / pageSize);
@@ -167,17 +287,67 @@ export default function HomePage() {
   );
 
   // -- Handlers --
-  const handleSort = (key: keyof IShop) => {
+  const handleSort = (key: keyof IShop | "distance") => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortOrder("desc");
+      setSortOrder(key === "distance" ? "asc" : "desc");
     }
   };
 
-  const executeSearch = () => {
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("瀏覽器不支援地理位置功能");
+      return;
+    }
+    setIsLoading(true); // temporary visual cue?
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        // Check if google is available
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const google = (window as any).google;
+        if (!google) return;
+
+        // Reverse Geocode to get address string (optional, but good for UI)
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode(
+          { location: { lat: latitude, lng: longitude } },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (results: any[], status: any) => {
+            setIsLoading(false);
+            if (status === "OK" && results && results[0]) {
+              const address = results[0].formatted_address;
+              setInputLocation(address);
+              setPendingLocation({ lat: latitude, lng: longitude, address });
+            } else {
+              // Fallback
+              setInputLocation(
+                `目前位置 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+              );
+              setPendingLocation({
+                lat: latitude,
+                lng: longitude,
+                address: "Current Location",
+              });
+            }
+          }
+        );
+      },
+      (err) => {
+        setIsLoading(false);
+        alert("無法取得位置: " + err.message);
+      }
+    );
+  };
+
+  const handleExecuteSearch = () => {
     // 1. Commit inputs to active state
+
+    // If inputLocation is cleared, we assume no location search
+    const loc = inputLocation.trim() ? pendingLocation : null;
+
     setActiveSearch({
       pref: inputPref,
       city: inputCity,
@@ -185,26 +355,35 @@ export default function HomePage() {
       price: inputPrice,
       term: inputSearchTerm,
       minRating: inputMinRating,
+      location: loc, // Commit location
     });
-    // 2. Disable default view (user explicitly searched)
+
+    // 2. Disable default view
     setIsDefaultView(false);
     // 3. Reset pagination
     setCurrentPage(1);
-    // 4. Rule 5: Always sort by Rating when searching
-    setSortKey("rating");
-    setSortOrder("desc");
+
+    // 4. Sort rule
+    // If loc is present, default sort is distance equivalent (handled in useMemo), but let's set key to 'distance' for UI feedback
+    if (loc) {
+      setSortKey("distance"); // custom key for UI
+      setSortOrder("asc");
+    } else {
+      setSortKey("rating");
+      setSortOrder("desc");
+    }
   };
 
   const handleClear = () => {
-    // 1. Clear UI inputs
     setInputPref("");
     setInputCity("");
     setInputCategory("");
     setInputPrice("");
     setInputSearchTerm("");
     setInputMinRating("");
+    setInputLocation("");
+    setPendingLocation(null);
 
-    // 2. Clear Active Search
     setActiveSearch({
       pref: "",
       city: "",
@@ -212,14 +391,17 @@ export default function HomePage() {
       price: "",
       term: "",
       minRating: "",
+      location: null,
     });
 
-    // 3. Return to Default View (Top 50)
     setIsDefaultView(true);
     setSortKey("rating");
     setSortOrder("desc");
     setCurrentPage(1);
   };
+
+  // Disable logic
+  const isLocationActive = !!inputLocation; // UI state controls disabled inputs
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8">
@@ -243,8 +425,7 @@ export default function HomePage() {
             >
               「食べログ 百名店」
             </a>
-            為資料基礎，一次收錄全日本約 7,000
-            間百名店，並提供完整資料查詢與篩選功能。
+            為資料基礎，提供位置搜尋與完整篩選功能。
           </p>
         </div>
       </div>
@@ -252,6 +433,39 @@ export default function HomePage() {
       {/* Control Panel */}
       <div className="card bg-base-100 mb-8 shadow-md">
         <div className="card-body">
+          {/* Location Search Row */}
+          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-12">
+            <div className="form-control md:col-span-9">
+              <label className="label">
+                <span className="label-text text-base font-semibold">
+                  輸入地點以查看附近
+                </span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  ref={locationInputRef}
+                  type="text"
+                  className="input input-bordered input-primary w-full"
+                  placeholder="輸入地址或地標 (例如: 東京駅)"
+                  value={inputLocation}
+                  onChange={(e) => {
+                    setInputLocation(e.target.value);
+                    if (!e.target.value) setPendingLocation(null);
+                  }}
+                />
+                <button
+                  className="btn btn-outline btn-primary shrink-0"
+                  onClick={handleUseMyLocation}
+                  title="使用目前位置"
+                >
+                  📍
+                </button>
+              </div>
+            </div>
+
+            {/* Spacing or Helper text could go here */}
+          </div>
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="form-control col-span-1 md:col-span-2 lg:col-span-4">
               <label className="label">
@@ -262,6 +476,10 @@ export default function HomePage() {
                 className="input input-bordered input-primary mt-2 w-full focus:outline-offset-2"
                 value={inputSearchTerm}
                 onChange={(e) => setInputSearchTerm(e.target.value)}
+                disabled={isLocationActive} // Disabled when location is active
+                placeholder={
+                  isLocationActive ? "地點搜尋模式下無法搜尋店名" : ""
+                }
               />
             </div>
 
@@ -275,6 +493,7 @@ export default function HomePage() {
                 className="select select-bordered select-primary mt-2 w-full"
                 value={inputPref}
                 onChange={(e) => setInputPref(e.target.value)}
+                disabled={isLocationActive} // Disabled
               >
                 <option value="">全部</option>
                 {uniquePrefs.map((p) => (
@@ -295,7 +514,7 @@ export default function HomePage() {
                 className="select select-bordered select-primary mt-2 w-full"
                 value={inputCity}
                 onChange={(e) => setInputCity(e.target.value)}
-                disabled={!inputPref}
+                disabled={!inputPref || isLocationActive} // Disabled
               >
                 <option value="">全部</option>
                 {uniqueCities
@@ -380,7 +599,10 @@ export default function HomePage() {
                   清除搜尋結果
                 </button>
               )}
-              <button className="btn btn-info px-8" onClick={executeSearch}>
+              <button
+                className="btn btn-info px-8"
+                onClick={handleExecuteSearch}
+              >
                 搜尋
               </button>
             </div>
@@ -407,12 +629,16 @@ export default function HomePage() {
                   精選 Top 50
                 </span>
               ) : (
-                <>搜尋結果: {displayShops.length} 筆</>
+                <>
+                  {activeSearch.location
+                    ? "📍 附近搜尋結果 (依距離排序)"
+                    : `搜尋結果: ${displayShops.length} 筆`}
+                </>
               )}
             </h2>
 
             <div className="flex items-center gap-4">
-              {/* Top Pagination Control */}
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="join join-horizontal">
                   <button
@@ -488,6 +714,11 @@ export default function HomePage() {
                       )}
                     </div>
                   </th>
+                  {activeSearch.location && (
+                    <th className="whitespace-nowrap">
+                      <div className="flex items-center gap-1">距離</div>
+                    </th>
+                  )}
                   <th
                     className="hover:bg-base-300 cursor-pointer whitespace-nowrap"
                     onClick={() => handleSort("prefecture")}
@@ -544,66 +775,80 @@ export default function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {currentShops.map((shop, idx) => (
-                  <tr key={shop.url + idx} className="hover">
-                    <td>
-                      {shop.thumbnailUrl ? (
-                        <div className="avatar">
-                          <div className="ring-base-300 relative h-12 w-12 rounded ring-1 ring-offset-1">
-                            <Image
-                              src={shop.thumbnailUrl}
-                              alt={shop.name}
-                              fill
-                              className="rounded object-cover"
-                              unoptimized
-                            />
+                {currentShops.map(
+                  (shop: IShop & { distance?: number }, idx) => (
+                    <tr key={shop.url + idx} className="hover">
+                      <td>
+                        {shop.thumbnailUrl ? (
+                          <div className="avatar">
+                            <div className="ring-base-300 relative h-12 w-12 rounded ring-1 ring-offset-1">
+                              <Image
+                                src={shop.thumbnailUrl}
+                                alt={shop.name}
+                                fill
+                                className="rounded object-cover"
+                                unoptimized
+                              />
+                            </div>
                           </div>
+                        ) : (
+                          <div className="bg-base-200 text-base-content/30 flex h-12 w-12 items-center justify-center rounded text-xs">
+                            無圖片
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="max-w-48 truncate text-base font-bold">
+                          <a
+                            href={shop.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-primary hover:underline"
+                          >
+                            {shop.name}
+                          </a>
                         </div>
-                      ) : (
-                        <div className="bg-base-200 text-base-content/30 flex h-12 w-12 items-center justify-center rounded text-xs">
-                          無圖片
+                        <div className="text-base-content/60 mt-0.5 max-w-48 text-xs">
+                          {shop.address}
                         </div>
+                      </td>
+                      <td>
+                        <span className="badge badge-ghost badge-sm whitespace-nowrap">
+                          {shop.category}
+                        </span>
+                      </td>
+
+                      {/* Distance Column */}
+                      {activeSearch.location && (
+                        <td className="font-mono text-sm whitespace-nowrap">
+                          {shop.distance !== undefined
+                            ? shop.distance < 1
+                              ? `${(shop.distance * 1000).toFixed(0)}m`
+                              : `${shop.distance.toFixed(1)}km`
+                            : "-"}
+                        </td>
                       )}
-                    </td>
-                    <td>
-                      <div className="max-w-48 truncate text-base font-bold">
-                        <a
-                          href={shop.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="hover:text-primary hover:underline"
-                        >
-                          {shop.name}
-                        </a>
-                      </div>
-                      <div className="text-base-content/60 mt-0.5 max-w-48 text-xs">
-                        {shop.address}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge badge-ghost badge-sm whitespace-nowrap">
-                        {shop.category}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap">{shop.prefecture}</td>
-                    <td className="whitespace-nowrap">{shop.city}</td>
-                    <td>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-amber-500">★</span>
-                        <span className="font-mono">{shop.rating}</span>
-                      </div>
-                    </td>
-                    <td className="font-mono text-xs whitespace-nowrap">
-                      {shop.price || "-"}
-                    </td>
-                    <td
-                      className="max-w-60 truncate text-xs"
-                      title={shop.closedDay}
-                    >
-                      {shop.closedDay || "-"}
-                    </td>
-                  </tr>
-                ))}
+
+                      <td className="whitespace-nowrap">{shop.prefecture}</td>
+                      <td className="whitespace-nowrap">{shop.city}</td>
+                      <td>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-amber-500">★</span>
+                          <span className="font-mono">{shop.rating}</span>
+                        </div>
+                      </td>
+                      <td className="font-mono text-xs whitespace-nowrap">
+                        {shop.price || "-"}
+                      </td>
+                      <td
+                        className="max-w-60 truncate text-xs"
+                        title={shop.closedDay}
+                      >
+                        {shop.closedDay || "-"}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
 
