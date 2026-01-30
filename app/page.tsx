@@ -305,6 +305,24 @@ export default function HomePage() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+
+        // Check if inside Japan (Rough binding box)
+        // Lat: 20 ~ 46, Lng: 122 ~ 154
+        const isInJapan =
+          latitude >= 20 &&
+          latitude <= 46 &&
+          longitude >= 122 &&
+          longitude <= 154;
+
+        if (!isInJapan) {
+          const proceed = confirm(
+            "您的位置似乎不在日本，搜尋結果可能不準確。\n是否仍要繼續？"
+          );
+          if (!proceed) {
+            setIsLoading(false);
+            return;
+          }
+        }
         // Check if google is available
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const google = (window as any).google;
@@ -317,20 +335,40 @@ export default function HomePage() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (results: any[], status: any) => {
             setIsLoading(false);
+            let locData = null;
+
             if (status === "OK" && results && results[0]) {
               const address = results[0].formatted_address;
               setInputLocation(address);
-              setPendingLocation({ lat: latitude, lng: longitude, address });
+              locData = { lat: latitude, lng: longitude, address };
+              setPendingLocation(locData);
             } else {
               // Fallback
-              setInputLocation(
-                `目前位置 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
-              );
-              setPendingLocation({
+              const fallbackAddr = `目前位置 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+              setInputLocation(fallbackAddr);
+              locData = {
                 lat: latitude,
                 lng: longitude,
                 address: "Current Location",
+              };
+              setPendingLocation(locData);
+            }
+
+            // Auto Search Execution
+            if (locData) {
+              setActiveSearch({
+                pref: inputPref,
+                city: inputCity,
+                category: inputCategory,
+                price: inputPrice,
+                term: inputSearchTerm,
+                minRating: inputMinRating,
+                location: locData,
               });
+              setIsDefaultView(false);
+              setCurrentPage(1);
+              setSortKey("distance");
+              setSortOrder("asc");
             }
           }
         );
@@ -342,11 +380,57 @@ export default function HomePage() {
     );
   };
 
-  const handleExecuteSearch = () => {
+  const handleExecuteSearch = async () => {
+    setIsLoading(true);
     // 1. Commit inputs to active state
 
     // If inputLocation is cleared, we assume no location search
-    const loc = inputLocation.trim() ? pendingLocation : null;
+    let loc = null;
+
+    if (inputLocation.trim()) {
+      if (pendingLocation && pendingLocation.address === inputLocation) {
+        // User selected from list or didn't change text after selection
+        loc = pendingLocation;
+      } else {
+        // User typed manually and didn't select, or changed text. Try strict geocoding.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const google = (window as any).google;
+        if (google) {
+          const geocoder = new google.maps.Geocoder();
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result = await new Promise<any>((resolve, reject) => {
+              geocoder.geocode(
+                { address: inputLocation },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (results: any[], status: any) => {
+                  if (status === "OK" && results && results[0]) {
+                    resolve(results[0]);
+                  } else {
+                    reject(status);
+                  }
+                }
+              );
+            });
+
+            if (result) {
+              const lat = result.geometry.location.lat();
+              const lng = result.geometry.location.lng();
+              loc = { lat, lng, address: result.formatted_address };
+              // Update UI with full formatted address? Maybe optional.
+              setInputLocation(result.formatted_address);
+              setPendingLocation(loc);
+            }
+          } catch (e) {
+            console.error("Geocoding failed", e);
+            // If failed, maybe we alert user? Or just search without location (but that ignores the input)
+            alert("找不到該地點，請嘗試更明確的地址");
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+    }
 
     setActiveSearch({
       pref: inputPref,
@@ -362,6 +446,7 @@ export default function HomePage() {
     setIsDefaultView(false);
     // 3. Reset pagination
     setCurrentPage(1);
+    setIsLoading(false);
 
     // 4. Sort rule
     // If loc is present, default sort is distance equivalent (handled in useMemo), but let's set key to 'distance' for UI feedback
@@ -438,32 +523,31 @@ export default function HomePage() {
             <div className="form-control md:col-span-9">
               <label className="label">
                 <span className="label-text text-base font-semibold">
-                  輸入地點以查看附近
+                  輸入地點以查看附近或點選右方按鈕帶入目前位置
                 </span>
               </label>
-              <div className="flex gap-2">
+              <button
+                className="btn btn-circle btn-ghost btn-sm btn-warning ml-2 shrink-0"
+                onClick={handleUseMyLocation}
+                title="使用目前位置"
+              >
+                📍
+              </button>
+              <div className="mt-2 flex gap-2">
                 <input
                   ref={locationInputRef}
                   type="text"
                   className="input input-bordered input-primary w-full"
-                  placeholder="輸入地址或地標 (例如: 東京駅)"
+                  placeholder="輸入地址或地標 (例如: 東京駅、淺草寺)"
                   value={inputLocation}
                   onChange={(e) => {
                     setInputLocation(e.target.value);
-                    if (!e.target.value) setPendingLocation(null);
+                    // Reset pending location on any manual change to force re-geocode on search
+                    setPendingLocation(null);
                   }}
                 />
-                <button
-                  className="btn btn-outline btn-primary shrink-0"
-                  onClick={handleUseMyLocation}
-                  title="使用目前位置"
-                >
-                  📍
-                </button>
               </div>
             </div>
-
-            {/* Spacing or Helper text could go here */}
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -716,7 +800,9 @@ export default function HomePage() {
                   </th>
                   {activeSearch.location && (
                     <th className="whitespace-nowrap">
-                      <div className="flex items-center gap-1">距離</div>
+                      <div className="flex items-center gap-1">
+                        距離現在位置
+                      </div>
                     </th>
                   )}
                   <th
