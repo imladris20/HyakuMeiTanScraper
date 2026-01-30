@@ -810,7 +810,7 @@ export default function HomePage() {
                   {activeSearch.location && (
                     <th className="whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        距離現在位置
+                        距離設定位置
                       </div>
                     </th>
                   )}
