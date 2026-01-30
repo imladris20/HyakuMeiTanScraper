@@ -25,11 +25,11 @@ async function getCoordinates(query: string, apiKey: string) {
 }
 
 async function main() {
-  const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_RUN_SCRIPT_KEY;
 
   if (!API_KEY) {
     console.error(
-      "❌ Link Error: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing in environment variables."
+      "❌ Link Error: NEXT_PUBLIC_GOOGLE_MAPS_API_RUN_SCRIPT_KEY is missing in environment variables."
     );
     process.exit(1);
   }
