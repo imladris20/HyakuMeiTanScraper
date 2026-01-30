@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { IoLocationSharp } from "react-icons/io5";
 import type { IShop } from "../lib/types";
 import icon from "./assets/icon.png";
 
@@ -500,8 +501,12 @@ export default function HomePage() {
         />
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1 md:flex-row">
-            <h1 className="text-3xl font-bold">HyakuMeiTanHub</h1>
-            <h1 className="text-3xl font-bold">食べログ 百名店查詢器</h1>
+            <h1 className="text-2xl font-bold min-[360px]:text-3xl">
+              HyakuMeiTanHub
+            </h1>
+            <h1 className="text-2xl font-bold min-[360px]:text-3xl">
+              食べログ 百名店查詢器
+            </h1>
           </div>
           <p className="text-base-content/70 text-base">
             搜尋餐廳從未如此輕鬆！
@@ -515,18 +520,18 @@ export default function HomePage() {
           {/* Location Search Row */}
           <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-12">
             <div className="form-control md:col-span-9">
-              <label className="label">
-                <span className="label-text text-base font-semibold">
-                  輸入地點以查看附近或點選右方按鈕帶入目前位置
-                </span>
-              </label>
-              <button
-                className="btn btn-circle btn-ghost btn-sm btn-warning ml-2 shrink-0"
-                onClick={handleUseMyLocation}
-                title="使用目前位置"
-              >
-                📍
-              </button>
+              <div className="label">
+                <p className="label-text text-sm font-semibold text-wrap md:text-base">
+                  輸入地點以查看附近或點選按鈕帶入目前位置
+                </p>
+                <button
+                  className="btn btn-square btn-outline btn-sm btn-primary shrink-0 items-center justify-center"
+                  onClick={handleUseMyLocation}
+                  title="使用目前位置"
+                >
+                  <IoLocationSharp />
+                </button>
+              </div>
               <div className="mt-1 flex gap-2">
                 <input
                   ref={locationInputRef}
@@ -547,7 +552,9 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="form-control col-span-1 md:col-span-2 lg:col-span-4">
               <label className="label">
-                <span className="label-text text-base font-semibold">店名</span>
+                <span className="label-text text-sm font-semibold md:text-base">
+                  店名
+                </span>
               </label>
               <input
                 type="text"
@@ -563,7 +570,7 @@ export default function HomePage() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-base font-semibold">
+                <span className="label-text text-sm font-semibold md:text-base">
                   都道府県
                 </span>
               </label>
@@ -584,7 +591,7 @@ export default function HomePage() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-base font-semibold">
+                <span className="label-text text-sm font-semibold md:text-base">
                   市町村区
                 </span>
               </label>
@@ -613,7 +620,9 @@ export default function HomePage() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-base font-semibold">類別</span>
+                <span className="label-text text-sm font-semibold md:text-base">
+                  類別
+                </span>
               </label>
               <select
                 className="select select-bordered select-primary mt-2 w-full"
@@ -631,7 +640,7 @@ export default function HomePage() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-base font-semibold">
+                <span className="label-text text-sm font-semibold md:text-base">
                   價格區間
                 </span>
               </label>
@@ -651,7 +660,7 @@ export default function HomePage() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-base font-semibold">
+                <span className="label-text text-sm font-semibold md:text-base">
                   最低評分
                 </span>
               </label>
