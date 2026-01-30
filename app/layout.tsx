@@ -17,7 +17,7 @@ export default function RootLayout({
       <head>
         <script
           async
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_PUBLIC_KEY}&libraries=places`}
         ></script>
       </head>
       <body className="bg-base-200 text-base-content min-h-screen">
