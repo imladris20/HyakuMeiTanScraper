@@ -1,4 +1,4 @@
-# Tabelog 百名店查詢器 (HyakuMeiTan Database)
+# Tabelog 百名店查詢器 (HyakuMeiTenHub)
 
 一個基於 **Next.js 16 + React 19 + Tailwind CSS v4 + daisyUI** 建置的現代化 Web 應用程式，旨在幫助使用者探索、搜尋與篩選日本 Tabelog（食べログ）「百名店」的精選餐廳資料。
 
